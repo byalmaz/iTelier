@@ -1,5 +1,5 @@
 #!/usr/bin/env swift
-// Original ReScope icon, drawn with native vector paths. No third-party artwork.
+// Original iTelier icon, drawn with native vector paths. No third-party artwork.
 import AppKit
 import Foundation
 import ImageIO

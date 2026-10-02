@@ -31,7 +31,7 @@ distribution_directory="$project_directory/dist"
 application_bundle="$distribution_directory/iTelier.app"
 runtime_tag="sonoma"
 if [ "$(uname -m)" = "arm64" ]; then runtime_tag="arm64_sonoma"; fi
-runtime_directory="${RESCOPE_RUNTIME_ROOT:-$project_directory/.runtime/$runtime_tag}"
+runtime_directory="${ITELIER_RUNTIME_ROOT:-$project_directory/.runtime/$runtime_tag}"
 if [ ! -f "$runtime_directory/_sources/sources.json" ]; then
   printf 'USB runtime missing. Run python3 scripts/prepare-runtime.py before building.\n' >&2
   exit 1
@@ -44,14 +44,14 @@ if [ "$configuration" = "release" ]; then
   # This also supports CLT installations where dsymutil cannot write its cache.
   swift_flags+=("-debug-info-format" "none")
 fi
-if [ "${RESCOPE_SWIFT_DISABLE_SANDBOX:-0}" = "1" ]; then
+if [ "${ITELIER_SWIFT_DISABLE_SANDBOX:-0}" = "1" ]; then
   # Opt in only where a parent sandbox prevents SwiftPM's nested sandbox.
   swift_flags+=(--disable-sandbox)
 fi
 # The + form supports macOS Bash 3.2 with nounset and an empty flags array.
 swift build ${swift_flags[@]+"${swift_flags[@]}"} --configuration "$configuration" --product iTelier
-swift build ${swift_flags[@]+"${swift_flags[@]}"} --configuration "$configuration" --product ReScopeRestoreHost
-swift build ${swift_flags[@]+"${swift_flags[@]}"} --configuration "$configuration" --product ReScopeWallpaperHost
+swift build ${swift_flags[@]+"${swift_flags[@]}"} --configuration "$configuration" --product iTelierRestoreHost
+swift build ${swift_flags[@]+"${swift_flags[@]}"} --configuration "$configuration" --product iTelierWallpaperHost
 binary_directory="$(swift build ${swift_flags[@]+"${swift_flags[@]}"} --configuration "$configuration" --show-bin-path)"
 if [ ! -x "$binary_directory/iTelier" ]; then
   printf 'The iTelier executable was not produced.\n' >&2
@@ -59,7 +59,7 @@ if [ ! -x "$binary_directory/iTelier" ]; then
 fi
 
 mkdir -p "$distribution_directory"
-staging_directory="$(mktemp -d "$distribution_directory/.rescope-build.XXXXXX")"
+staging_directory="$(mktemp -d "$distribution_directory/.itelier-build.XXXXXX")"
 trap 'rm -rf "$staging_directory"' EXIT
 staged_bundle="$staging_directory/iTelier.app"
 mkdir -p "$staged_bundle/Contents/MacOS" "$staged_bundle/Contents/Resources"
@@ -67,21 +67,21 @@ cp "$binary_directory/iTelier" "$staged_bundle/Contents/MacOS/iTelier"
 
 # Keep resource bundles in the macOS resource directory so strict code signing
 # seals them. In-app illustrations are drawn natively in SwiftUI.
-for resource_bundle in "$binary_directory"/*.bundle; do
+for resource_bundle in "$binary_directory/iTelier_iTelier.bundle"; do
   if [ -d "$resource_bundle" ]; then
     ditto "$resource_bundle" "$staged_bundle/Contents/Resources/$(basename "$resource_bundle")"
   fi
 done
 # Main-bundle localization lets AppKit translate its standard menus and panels.
 mkdir -p "$staged_bundle/Contents/Resources/fr.lproj"
-cp "$project_directory/Sources/ReScope/Resources/fr.lproj/InfoPlist.strings" "$staged_bundle/Contents/Resources/fr.lproj/InfoPlist.strings"
+cp "$project_directory/Sources/iTelier/Resources/fr.lproj/InfoPlist.strings" "$staged_bundle/Contents/Resources/fr.lproj/InfoPlist.strings"
 mkdir -p "$staged_bundle/Contents/Resources/en.lproj"
-cp "$project_directory/Sources/ReScope/Resources/en.lproj/InfoPlist.strings" "$staged_bundle/Contents/Resources/en.lproj/InfoPlist.strings"
+cp "$project_directory/Sources/iTelier/Resources/en.lproj/InfoPlist.strings" "$staged_bundle/Contents/Resources/en.lproj/InfoPlist.strings"
 python3 "$script_directory/bundle-runtime.py" "$runtime_directory" "$staged_bundle"
-cp "$binary_directory/ReScopeRestoreHost" "$staged_bundle/Contents/Helpers/ReScopeRestoreHost"
-codesign --force --sign - "$staged_bundle/Contents/Helpers/ReScopeRestoreHost"
-cp "$binary_directory/ReScopeWallpaperHost" "$staged_bundle/Contents/Helpers/ReScopeWallpaperHost"
-codesign --force --sign - "$staged_bundle/Contents/Helpers/ReScopeWallpaperHost"
+cp "$binary_directory/iTelierRestoreHost" "$staged_bundle/Contents/Helpers/iTelierRestoreHost"
+codesign --force --sign - "$staged_bundle/Contents/Helpers/iTelierRestoreHost"
+cp "$binary_directory/iTelierWallpaperHost" "$staged_bundle/Contents/Helpers/iTelierWallpaperHost"
+codesign --force --sign - "$staged_bundle/Contents/Helpers/iTelierWallpaperHost"
 
 cat > "$staged_bundle/Contents/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
@@ -90,11 +90,11 @@ cat > "$staged_bundle/Contents/Info.plist" <<'PLIST'
 <dict>
   <key>CFBundleName</key><string>iTelier</string>
   <key>CFBundleDisplayName</key><string>iTelier</string>
-  <key>CFBundleIdentifier</key><string>com.rescope.app</string>
+  <key>CFBundleIdentifier</key><string>com.itelier.app</string>
   <key>CFBundleExecutable</key><string>iTelier</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>0.2.0</string>
-  <key>CFBundleVersion</key><string>38</string>
+  <key>CFBundleVersion</key><string>39</string>
   <key>CFBundleDevelopmentRegion</key><string>fr</string>
   <key>CFBundleLocalizations</key><array><string>fr</string><string>en</string></array>
   <key>LSMinimumSystemVersion</key><string>14.0</string>

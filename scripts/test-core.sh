@@ -3,13 +3,13 @@
 set -euo pipefail
 
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-work_dir="$(mktemp -d "${TMPDIR:-/tmp}/rescope-core-tests.XXXXXX")"
+work_dir="$(mktemp -d "${TMPDIR:-/tmp}/itelier-core-tests.XXXXXX")"
 trap 'rm -rf "$work_dir"' EXIT
 
 command -v swiftc >/dev/null || { printf '%s\n' 'Swift 6 or newer is required.' >&2; exit 1; }
 command -v python3 >/dev/null || { printf '%s\n' 'Python 3 is required to generate the temporary test entry point.' >&2; exit 1; }
 
-python3 - "$work_dir" "$repo_dir"/Tests/ReScopeCoreTests/*.swift <<'PY'
+python3 - "$work_dir" "$repo_dir"/Tests/iTelierCoreTests/*.swift <<'PY'
 from pathlib import Path
 import re
 import sys
@@ -21,7 +21,7 @@ suites = []
 for index, path in enumerate(sorted(Path(p) for p in sys.argv[2:])):
     source = path.read_text(encoding="utf-8")
     # Keep the test methods and their assertions verbatim. They compile with the same core files.
-    source = source.replace("import XCTest\n", "import Foundation\n").replace("@testable import ReScopeCore\n", "")
+    source = source.replace("import XCTest\n", "import Foundation\n").replace("@testable import iTelierCore\n", "")
     classes = re.findall(r"\bclass\s+(\w+)\s*:\s*XCTestCase\b", source)
     if len(classes) != 1:
         raise SystemExit(path.name + " must declare exactly one XCTestCase class.")
@@ -96,5 +96,5 @@ print("Running", count, "existing XCTest test bodies from", len(suites), "files 
 PY
 
 swiftc -module-cache-path "$work_dir/ModuleCache" -swift-version 5 -parse-as-library \
-    "$repo_dir"/Sources/ReScopeCore/*.swift "$work_dir"/*.swift -o "$work_dir/CoreTests"
+    "$repo_dir"/Sources/iTelierCore/*.swift "$work_dir"/*.swift -o "$work_dir/CoreTests"
 "$work_dir/CoreTests"

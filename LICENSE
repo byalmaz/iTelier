@@ -20,6 +20,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-Third-party notice: Apple wallpaper artwork in Sources/ReScope/Resources/Wallpapers
+Third-party notice: Apple wallpaper artwork in Sources/iTelier/Resources/Wallpapers
 is excluded from the MIT grant above. See WallpaperSources.json and
 docs/visual-assets.md for provenance. Bundled USB tools retain their upstream licenses.

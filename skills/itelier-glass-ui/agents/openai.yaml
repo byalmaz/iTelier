@@ -1,0 +1,4 @@
+interface:
+  display_name: "iTelier · UI en verre"
+  short_description: "Icônes droites en verre et navigation au survol"
+  default_prompt: "Utilise $itelier-glass-ui pour appliquer le style en verre validé dans iTelier."

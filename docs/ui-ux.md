@@ -1,10 +1,10 @@
-# Analyse UI/UX de ReScope
+# Analyse UI/UX de iTelier
 
 Direction UX et visuelle retenue au 1er octobre 2026.
 
-ReScope est une application native macOS 13 et versions suivantes, réalisée avec SwiftUI. Sa première fonction est la restauration d’un iPhone ou d’un iPad à partir d’un fichier IPSW. Sa seconde fonction est un contrôle de l’appareil inspiré du rapport fourni dans la capture utilisateur. Le projet est destiné à GitHub, avec une licence MIT retenue provisoirement.
+iTelier est une application native macOS 13 et versions suivantes, réalisée avec SwiftUI. Sa première fonction est la restauration d’un iPhone ou d’un iPad à partir d’un fichier IPSW. Sa seconde fonction est un contrôle de l’appareil inspiré du rapport fourni dans la capture utilisateur. Le projet est destiné à GitHub, avec une licence MIT retenue provisoirement.
 
-L’objectif de l’interface est de rendre une opération technique compréhensible, de réduire les erreurs de sélection et de montrer précisément ce que l’application a pu contrôler. Les fonctions de 3uTools servent de référence fonctionnelle. ReScope conserve son propre nom, ses propres composants et ses propres illustrations.
+L’objectif de l’interface est de rendre une opération technique compréhensible, de réduire les erreurs de sélection et de montrer précisément ce que l’application a pu contrôler. Les fonctions de 3uTools servent de référence fonctionnelle. iTelier conserve son propre nom, ses propres composants et ses propres illustrations.
 
 ## Hiérarchie et navigation
 
@@ -25,9 +25,9 @@ Le parcours suit un dévoilement progressif : analyse, présentation des résult
 
 ## Analyse de la capture du rapport de vérification
 
-La capture du rapport 3uTools est une référence de besoins. Ses informations ne sont pas des données de test que ReScope doit présenter comme provenant d’un appareil réel.
+La capture du rapport 3uTools est une référence de besoins. Ses informations ne sont pas des données de test que iTelier doit présenter comme provenant d’un appareil réel.
 
-| Observation | Effet sur la compréhension | Décision pour ReScope |
+| Observation | Effet sur la compréhension | Décision pour iTelier |
 | --- | --- | --- |
 | Score de 97 et étoiles | Le résultat paraît précis alors que la méthode et la couverture ne sont pas visibles. | Afficher une couverture des contrôles plutôt qu’une note globale. |
 | Bandeau « No issues found » avec contrôles inconnus ou en attente | Le message général est plus affirmatif que les résultats détaillés. | Écrire « Aucune anomalie parmi les contrôles disponibles » uniquement si les données le justifient. |
@@ -43,7 +43,7 @@ La capture du rapport 3uTools est une référence de besoins. Ses informations n
 
 ## Décision : couverture et états explicites
 
-ReScope n’utilise pas de score de santé arbitraire. Le résumé annonce la portée du rapport, par exemple : **« Contrôle partiel · 8 contrôles disponibles · 3 vérifications manuelles »**. Ces nombres sont calculés à partir du rapport effectivement produit.
+iTelier n’utilise pas de score de santé arbitraire. Le résumé annonce la portée du rapport, par exemple : **« Contrôle partiel · 8 contrôles disponibles · 3 vérifications manuelles »**. Ces nombres sont calculés à partir du rapport effectivement produit.
 
 Les états du rapport sont distincts :
 
@@ -100,7 +100,7 @@ Les tutoriels de 3uTools distinguent l’import du firmware, les modes de restau
 
 ## Originalité visuelle
 
-La direction retenue associe un **fond indigo continu**, une **sidebar intégrée**, des **cartes de verre gris violet**, une **typographie grande et légère**, des **halos cyan** et des **boutons principaux jaunes**. La représentation de l’appareil et les icônes en volume sont des créations originales pour ReScope. Le nom, le logo et les illustrations appartiennent à sa propre identité.
+La direction retenue associe un **fond indigo continu**, une **sidebar intégrée**, des **cartes de verre gris violet**, une **typographie grande et légère**, des **halos cyan** et des **boutons principaux jaunes**. La représentation de l’appareil et les icônes en volume sont des créations originales pour iTelier. Le nom, le logo et les illustrations appartiennent à sa propre identité.
 
 Le fond principal et la sidebar partagent l’indigo `#1C1533`. Leur séparation repose sur l’espacement et la hiérarchie de navigation. L’état sélectionné utilise une surface lumineuse discrète et un libellé lisible. Les cartes superposent un gradient blanc translucide d’environ 8 à 13 %, un contour clair fin et des angles arrondis. Ces surfaces restent dans la même gamme sombre que la fenêtre.
 

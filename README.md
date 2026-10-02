@@ -11,7 +11,7 @@
 
 ## État du projet
 
-Version de développement 0.2.0 (build 38), macOS 14 ou plus récent. Les outils USB embarqués sont issus des paquets officiels Homebrew ciblés Sonoma.
+Version de développement 0.2.0 (build 39), macOS 14 ou plus récent. Les outils USB embarqués sont issus des paquets officiels Homebrew ciblés Sonoma.
 
 - Application native, avec mode de démonstration pour explorer l’interface sans appareil.
 - Outils de détection USB, de diagnostic et de restauration libimobiledevice/libirecovery/idevicerestore inclus dans l’app, avec leurs bibliothèques.
@@ -24,11 +24,11 @@ Version de développement 0.2.0 (build 38), macOS 14 ou plus récent. Les outils
 - Aperçu personnel de l’écran verrouillé lorsqu’il est disponible, dans une coque adaptée au modèle connecté. L’heure reçue dans l’aperçu peut être figée ; ce n’est pas un écran en direct.
 - Illustrations de repli pour les appareils et le mode de démonstration, avec provenance documentée dans [les assets visuels](docs/visual-assets.md).
 - Sauvegardes locales datées, chiffrement optionnel, ajout de sauvegardes Finder et restauration confirmée.
-- Style UI réutilisable : [rescope-glass-ui](skills/rescope-glass-ui/SKILL.md).
+- Style UI réutilisable : [itelier-glass-ui](skills/itelier-glass-ui/SKILL.md).
 
 Les tests sur de vrais appareils restent nécessaires avant une première release publique, en particulier pour les changements de mode USB et les restaurations complètes. Un build réussi ne prouve pas qu’une restauration a été testée.
 
-Validation locale des 1er et 2 octobre 2026 : **115 tests du cœur réussis** et helper de restauration validé avec un moteur inerte. Le bundle release `arm64` du build 37 et son archive ont été vérifiés, dont la signature ad hoc stricte. La lecture USB des informations et de l’aperçu personnel de l’écran verrouillé a été validée ; le choix du chiffrement persiste après navigation et relance. Une restauration avec conservation entreprise par l’utilisateur a échoué malgré un code moteur 0 : l’app refuse désormais cette fausse réussite et exige une confirmation terminale sans erreur fatale. Ce correctif ne résout pas l’échec de signature du composant et aucune restauration complète réussie sur appareil physique n’est confirmée. Voir [la portée de cette validation](docs/testing.md).
+Validation locale du 2 octobre 2026 : **122 tests du cœur réussis** et helper de restauration validé avec un moteur inerte. Le bundle release `arm64` du build 39, son ZIP et son DMG ont été vérifiés, dont la signature ad hoc stricte et la migration des données locales. Le choix du chiffrement reste sur OFF après migration. Les versions précédentes ont validé la lecture USB des informations et de l’aperçu personnel de l’écran verrouillé. Une restauration avec conservation entreprise par l’utilisateur a échoué malgré un code moteur 0 : l’app refuse désormais cette fausse réussite et exige une confirmation terminale sans erreur fatale. Ce correctif ne résout pas l’échec de signature du composant et aucune restauration complète réussie sur appareil physique n’est confirmée. Voir [la portée de cette validation](docs/testing.md).
 
 ## Compiler et lancer
 
@@ -64,9 +64,11 @@ Pour découvrir l’interface avec des données fictives :
 open dist/iTelier.app --args --demo
 ```
 
-Le script produit `dist/iTelier.app` pour l’architecture du Mac qui compile. Il ne crée pas de binaire universel et n’installe rien. Une signature ad hoc est appliquée avec `codesign` lorsqu’il est disponible. L’app n’est pas signée avec Developer ID et n’est pas notariée. L’identifiant `com.rescope.app` et la version `0.2.0` sont conservés pour cette distribution de développement.
+Le script produit `dist/iTelier.app` pour l’architecture du Mac qui compile. Il ne crée pas de binaire universel et n’installe rien. Une signature ad hoc est appliquée avec `codesign` lorsqu’il est disponible. L’app n’est pas signée avec Developer ID et n’est pas notariée. L’identifiant du bundle est `com.itelier.app`, pour cette distribution de développement `0.2.0`.
 
-Dans un environnement qui empêche SwiftPM de créer son sandbox imbriqué, le script accepte l’option explicite `RESCOPE_SWIFT_DISABLE_SANDBOX=1 bash scripts/build-app.sh`. Le sandbox SwiftPM reste actif par défaut, notamment dans la CI.
+Au premier lancement du build 39, iTelier déplace les anciens dossiers de données et de téléchargements vers `iTelier`, puis reprend les réglages existants. Les sauvegardes, références et rapports restent accessibles. La migration refuse de remplacer un dossier déjà présent ou de déplacer les données pendant une opération active.
+
+Dans un environnement qui empêche SwiftPM de créer son sandbox imbriqué, le script accepte l’option explicite `ITELIER_SWIFT_DISABLE_SANDBOX=1 bash scripts/build-app.sh`. Le sandbox SwiftPM reste actif par défaut, notamment dans la CI.
 
 Pour créer une image d’installation depuis le bundle déjà compilé :
 
@@ -92,7 +94,7 @@ brew install libimobiledevice libirecovery
 
 Sources : [libimobiledevice dans Homebrew](https://formulae.brew.sh/formula/libimobiledevice) et [libirecovery dans Homebrew](https://formulae.brew.sh/formula/libirecovery).
 
-La restauration réelle nécessite le bundle complet, qui contient le module indépendant `ReScopeRestoreHost`. Pour étudier ou compiler un moteur externe, suivre les [instructions macOS du projet amont](https://github.com/libimobiledevice/idevicerestore#macos). Elles décrivent l’installation des outils de compilation via Homebrew et la construction de `idevicerestore` avec ses dépendances. La documentation iTelier ne suppose pas l’existence d’une formule `idevicerestore` dans Homebrew core. Les taps tiers sont sous la responsabilité de leur mainteneur.
+La restauration réelle nécessite le bundle complet, qui contient le module indépendant `iTelierRestoreHost`. Pour étudier ou compiler un moteur externe, suivre les [instructions macOS du projet amont](https://github.com/libimobiledevice/idevicerestore#macos). Elles décrivent l’installation des outils de compilation via Homebrew et la construction de `idevicerestore` avec ses dépendances. La documentation iTelier ne suppose pas l’existence d’une formule `idevicerestore` dans Homebrew core. Les taps tiers sont sous la responsabilité de leur mainteneur.
 
 Pour le Check, brancher l’appareil par USB, le déverrouiller et accepter **Faire confiance à cet ordinateur** sur l’iPhone ou l’iPad. Une restauration peut utiliser un appareil en mode normal, récupération ou DFU selon l’état détecté ; l’app exige l’identification précise de la cible avant le lancement.
 
@@ -110,15 +112,15 @@ iTelier ne dispose pas d’une base Apple des valeurs de sortie d’usine. Il ne
 
 Depuis 0.1.6, **Vérification → Enregistrer ce Check** remplit la colonne Référence avec un relevé daté. Une nouvelle lecture indique **Identique**, **Écart** ou **Non comparable**. Le premier relevé porte explicitement **Relevé initial** : enregistrer la lecture actuelle ne constitue pas une vérification indépendante. La charge, les cycles, la santé estimée, la version système et les tests manuels restent hors de cette comparaison des composants.
 
-**Importer un rapport…** accepte les exports JSON iTelier de schéma 2 ou 3, ainsi que les anciens rapports ReWork et ReScope, du même appareil, avec les numéros de série visibles. Les exports masqués, les modèles/ECID différents, les doublons et les fichiers trop volumineux sont refusés. Les valeurs comparées viennent de la colonne Valeur lue de l’ancien rapport, jamais d’une prétendue référence usine importée. Un rapport importé reste non certifié.
+**Importer un rapport…** accepte les exports JSON iTelier de schéma 2 ou 3, ainsi que les rapports des versions précédentes, du même appareil, avec les numéros de série visibles. Les exports masqués, les modèles/ECID différents, les doublons et les fichiers trop volumineux sont refusés. Les valeurs comparées viennent de la colonne Valeur lue de l’ancien rapport, jamais d’une prétendue référence usine importée. Un rapport importé reste non certifié.
 
-Les références sont enregistrées en local dans `~/Library/Application Support/ReScope/References`, avec des fichiers privés (0600), séparés pour chaque appareil et pour les exemples. Elles sont rechargées à chaque Check. **Remplacer par ce Check** conserve aussi la référence précédente dans un fichier `.previous.json`. L’export inclut les valeurs comparées et la provenance de la référence ; les valeurs sensibles restent masquées tant que l’affichage des numéros de série est désactivé.
+Les références sont enregistrées en local dans `~/Library/Application Support/iTelier/References`, avec des fichiers privés (0600), séparés pour chaque appareil et pour les exemples. Elles sont rechargées à chaque Check. **Remplacer par ce Check** conserve aussi la référence précédente dans un fichier `.previous.json`. L’export inclut les valeurs comparées et la provenance de la référence ; les valeurs sensibles restent masquées tant que l’affichage des numéros de série est désactivé.
 
 ## Restauration IPSW
 
 Dans **Restaurer**, ouvrir le catalogue pour choisir une version. Le modèle connecté est présélectionné lorsqu’il est connu ; une recherche permet aussi de choisir un iPhone ou un iPad sans appareil branché. Le catalogue affiche par défaut toutes les versions disponibles, y compris les bêtas et les versions non signées. Les filtres Toutes / Publiques / Bêtas et Signées uniquement affinent la liste. Les versions non signées peuvent être téléchargées pour archivage, mais une restauration standard ne peut pas les installer et leur lancement reste désactivé dans l’app. Pour un fichier importé localement, la signature reste inconnue jusqu’au contrôle du moteur.
 
-Après le choix d’une version, **Télécharger** démarre directement dans **Téléchargements/ReScope**. Ce dossier est créé automatiquement ; **Configuration → Dossier des fichiers IPSW** permet de le modifier ou de l’ouvrir. **Restaurer…** télécharge aussi l’IPSW, puis ouvre la préparation avec le choix de conserver ou d’effacer les données et une confirmation finale. Un firmware déjà chargé dans la session est réutilisé, avec revalidation avant écriture. Le transfert affiche sa progression et peut être annulé ; il ne reprend pas encore un téléchargement interrompu. Une fois le fichier téléchargé, l’app contrôle la taille annoncée, compare l’empreinte SHA-256 lorsqu’elle est fournie par le catalogue, puis calcule son empreinte locale et vérifie le manifeste avant de le proposer pour le parcours de restauration. Le téléchargement ne lance jamais une restauration et n’exige pas les outils USB externes. Le téléchargement reste disponible en mode aperçu ; les opérations sur l’appareil y restent désactivées.
+Après le choix d’une version, **Télécharger** démarre directement dans **Téléchargements/iTelier**. Ce dossier est créé automatiquement ; **Configuration → Dossier des fichiers IPSW** permet de le modifier ou de l’ouvrir. **Restaurer…** télécharge aussi l’IPSW, puis ouvre la préparation avec le choix de conserver ou d’effacer les données et une confirmation finale. Un firmware déjà chargé dans la session est réutilisé, avec revalidation avant écriture. Le transfert affiche sa progression et peut être annulé ; il ne reprend pas encore un téléchargement interrompu. Une fois le fichier téléchargé, l’app contrôle la taille annoncée, compare l’empreinte SHA-256 lorsqu’elle est fournie par le catalogue, puis calcule son empreinte locale et vérifie le manifeste avant de le proposer pour le parcours de restauration. Le téléchargement ne lance jamais une restauration et n’exige pas les outils USB externes. Le téléchargement reste disponible en mode aperçu ; les opérations sur l’appareil y restent désactivées.
 
 Les métadonnées proviennent des catalogues tiers [IPSW.me](https://ipsw.me/api/) et [AppleDB](https://github.com/littlebyteorg/appledb/blob/main/API.md), dont la publication officielle GitHub complète les bêtas et les archives. L’indice AppleDB est gardé en mémoire cinq minutes ; une source indisponible est signalée sans masquer les résultats de l’autre. L’app lui demande le catalogue et l’identifiant générique du modèle, par exemple `iPhone16,1` ; elle ne lui transmet pas de numéro de série, UDID, ECID ni rapport de diagnostic. Les octets de l’IPSW sont téléchargés directement sur une URL Apple autorisée en HTTPS, avec redirections restreintes. Les entrées dont le lien n’est pas un IPSW Apple en HTTPS sont écartées ; le catalogue affiché peut donc omettre des liens historiques en HTTP. Apple documente ses hôtes de téléchargement dans [sa liste de domaines réseau](https://support.apple.com/fr-fr/101555).
 
@@ -136,9 +138,9 @@ iTelier ne contourne ni le verrouillage d’activation, ni un code de déverroui
 
 ## Erreurs et interruptions
 
-iTelier conserve un journal privé dans `~/Library/Application Support/ReScope/Support`. Une fermeture inattendue est détectée au prochain démarrage. Si elle concernait une restauration, aucune opération n’est relancée : l’interface retrouve le suivi du moteur encore actif, ou bloque une nouvelle tentative jusqu’à une vérification explicite de l’appareil. Ce blocage persiste même si l’utilisateur ferme puis rouvre l’app.
+iTelier conserve un journal privé dans `~/Library/Application Support/iTelier/Support`. Une fermeture inattendue est détectée au prochain démarrage. Si elle concernait une restauration, aucune opération n’est relancée : l’interface retrouve le suivi du moteur encore actif, ou bloque une nouvelle tentative jusqu’à une vérification explicite de l’appareil. Ce blocage persiste même si l’utilisateur ferme puis rouvre l’app.
 
-Le module indépendant `ReScopeRestoreHost` possède le processus de restauration et ses canaux de sortie. Il conserve son état dans `~/Library/Application Support/ReScope/Restores`, empêche deux écritures simultanées et refuse de rejouer une requête consommée. Il demande à macOS d’éviter la veille automatique pendant l’opération. Une panne du Mac, un arrêt forcé du moteur ou une déconnexion USB restent susceptibles d’interrompre une restauration : ce dispositif ne garantit pas la récupération d’un appareil ni la conservation des données.
+Le module indépendant `iTelierRestoreHost` possède le processus de restauration et ses canaux de sortie. Il conserve son état dans `~/Library/Application Support/iTelier/Restores`, empêche deux écritures simultanées et refuse de rejouer une requête consommée. Il demande à macOS d’éviter la veille automatique pendant l’opération. Une panne du Mac, un arrêt forcé du moteur ou une déconnexion USB restent susceptibles d’interrompre une restauration : ce dispositif ne garantit pas la récupération d’un appareil ni la conservation des données.
 
 **Configuration → Signaler un problème**, l’écran Activité et les erreurs ouvrent le rapport d’incident. L’utilisateur peut ajouter une description, relire le JSON exact, le copier, l’exporter ou choisir **Envoyer…**. Le partage macOS lui laisse choisir le destinataire et valider l’envoi. Aucun rapport n’est envoyé automatiquement et aucun dépôt ou destinataire de support n’est préconfiguré. Les champs automatiques excluent numéros de série, UDID, ECID, noms d’appareils, chemins et journaux bruts ; le texte saisi par l’utilisateur doit être relu avant partage. Les journaux locaux du moteur peuvent contenir ces informations et ne sont pas joints au rapport.
 
@@ -154,7 +156,7 @@ Projet indépendant, sans affiliation avec Apple ni avec les éditeurs de 3uTool
 
 ## Sauvegardes locales
 
-La rubrique **Sauvegardes** crée une copie complète avec `idevicebackup2 backup --full`, dans `~/Library/Application Support/ReScope/Backups` par défaut. L’emplacement peut être changé. Chaque opération utilise un nouveau dossier privé et conserve les copies précédentes. **Ajouter un dossier…** référence une sauvegarde Apple/Finder existante sans la déplacer ni la copier.
+La rubrique **Sauvegardes** crée une copie complète avec `idevicebackup2 backup --full`, dans `~/Library/Application Support/iTelier/Backups` par défaut. L’emplacement peut être changé. Chaque opération utilise un nouveau dossier privé et conserve les copies précédentes. **Ajouter un dossier…** référence une sauvegarde Apple/Finder existante sans la déplacer ni la copier.
 
 Contrairement au dossier de sauvegarde du Finder, que macOS protège, ce dossier est lisible par tout programme lancé dans la session de l’utilisateur. **Chiffrer la sauvegarde** est désactivé au premier lancement, puis mémorise le dernier choix. Le chiffrement protège le contenu des sauvegardes ; l’interface le rappelle lorsqu’il est désactivé.
 

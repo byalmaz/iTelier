@@ -61,7 +61,7 @@ def retrieve_source(source):
         return
     temporary = destination.with_suffix(destination.suffix + ".partial")
     try:
-        request = urllib.request.Request(source["url"], headers={"User-Agent": "ReScope-build"})
+        request = urllib.request.Request(source["url"], headers={"User-Agent": "iTelier-build"})
         with urllib.request.urlopen(request, timeout=60) as response, temporary.open("wb") as output:
             shutil.copyfileobj(response, output)
         if hashlib.sha256(temporary.read_bytes()).hexdigest() != source["sha256"]:

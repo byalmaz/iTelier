@@ -2,7 +2,7 @@
 """Build pinned, unmodified idevicerestore sources with the macOS SDK and bottled libraries.
 
 The explicit Darwin configuration below mirrors upstream configure.ac. Limera1n
-support is omitted: ReScope uses only Apple's standard signed restore process.
+support is omitted: iTelier uses only Apple's standard signed restore process.
 No system installation or device operation is performed by this build.
 """
 import hashlib

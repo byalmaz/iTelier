@@ -2,21 +2,21 @@
 import PackageDescription
 
 let package = Package(
-    name: "ReScope",
+    name: "iTelier",
     defaultLocalization: "fr",
     platforms: [.macOS(.v13)],
     products: [
-        .library(name: "ReScopeCore", targets: ["ReScopeCore"]),
-        .executable(name: "iTelier", targets: ["ReScope"]),
-        .executable(name: "ReScopeRestoreHost", targets: ["ReScopeRestoreHost"]),
-        .executable(name: "ReScopeWallpaperHost", targets: ["ReScopeWallpaperHost"])
+        .library(name: "iTelierCore", targets: ["iTelierCore"]),
+        .executable(name: "iTelier", targets: ["iTelier"]),
+        .executable(name: "iTelierRestoreHost", targets: ["iTelierRestoreHost"]),
+        .executable(name: "iTelierWallpaperHost", targets: ["iTelierWallpaperHost"])
     ],
     targets: [
-        .target(name: "ReScopeCore"),
-        .executableTarget(name: "ReScope", dependencies: ["ReScopeCore"], exclude: ["Resources/CheckIcon.png", "Resources/RestoreIcon.png", "Resources/DeviceHero.png"], resources: [.process("Resources")]),
-        .executableTarget(name: "ReScopeRestoreHost", dependencies: ["ReScopeCore"]),
-        .executableTarget(name: "ReScopeWallpaperHost"),
-        .testTarget(name: "ReScopeCoreTests", dependencies: ["ReScopeCore"])
+        .target(name: "iTelierCore"),
+        .executableTarget(name: "iTelier", dependencies: ["iTelierCore"], exclude: ["Resources/CheckIcon.png", "Resources/RestoreIcon.png", "Resources/DeviceHero.png"], resources: [.process("Resources")]),
+        .executableTarget(name: "iTelierRestoreHost", dependencies: ["iTelierCore"]),
+        .executableTarget(name: "iTelierWallpaperHost"),
+        .testTarget(name: "iTelierCoreTests", dependencies: ["iTelierCore"])
     ],
     swiftLanguageModes: [.v5]
 )

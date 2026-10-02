@@ -9,7 +9,7 @@ import time
 import uuid
 
 repo = Path(__file__).resolve().parent.parent
-with tempfile.TemporaryDirectory(prefix="rescope-host-test-") as work:
+with tempfile.TemporaryDirectory(prefix="itelier-host-test-") as work:
     root = Path(work)
     source = root / "HostTest.swift"
     source.write_text(r'''
@@ -34,7 +34,7 @@ import Darwin
 ''')
     binary = root / "HostTest"
     subprocess.run(["swiftc", "-module-cache-path", str(root / "ModuleCache"), "-swift-version", "5", "-parse-as-library",
-                    *map(str, sorted((repo / "Sources/ReScopeCore").glob("*.swift"))), str(source), "-o", str(binary)], check=True)
+                    *map(str, sorted((repo / "Sources/iTelierCore").glob("*.swift"))), str(source), "-o", str(binary)], check=True)
     engine = root / "inert-engine"
     engine.write_text("#!/bin/sh\nprintf 'progress: 4 0.2\\n'\nprintf 'inert-started\\n'\nsleep 2\nprintf 'Status: Restore Finished\\n'\nprintf 'inert-finished\\n'\nexit 0\n")
     engine.chmod(0o700)

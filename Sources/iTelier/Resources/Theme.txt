@@ -1,0 +1,2 @@
+iTelier — original native interface and device illustration.
+The visual asset prompt and attribution are documented in docs/visual-assets.md.

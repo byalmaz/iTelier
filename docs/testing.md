@@ -1,5 +1,15 @@
 # Tests du cœur
 
+## Build 39 — renommage complet et migration
+
+Les dossiers, modules SwiftPM, helpers, ressources, identifiant du bundle (`com.itelier.app`), variables d’environnement et documentation portent désormais le nom iTelier. Les ressources des fonds d’écran sont sous `Sources/iTelier/Resources/Wallpapers`. Le script d’assemblage choisit uniquement le bundle de ressources actuel, même si un ancien cache SwiftPM existe.
+
+La migration conserve les préférences, sauvegardes, références et téléchargements. Elle refuse les conflits de dossiers, les liens symboliques et les opérations encore actives ; elle conserve le choix actuel d’une préférence déjà renseignée. Les chemins des préférences et requêtes archivées sont adaptés, les sauvegardes incomplètes restent identifiées et les rapports des versions précédentes restent importables. La migration démarre après l’ouverture de la fenêtre, sans bloquer son thread principal. Elle ne parcourt ni tout Téléchargements ni le contenu des sauvegardes.
+
+Validation locale : **122 tests du cœur réussis**, dont sept tests de migration et deux tests d’import des noms historiques. Le helper de restauration passe ses tests avec un moteur inerte et les six tests d’intégrité des dépendances réussissent. `scripts/check-branding.py` vérifie les noms et contenus des fichiers livrés ; GitHub Actions l’exécute sur les sources et le bundle. Les anciennes réservations privées, exclues de Git et des distributions, restent intactes.
+
+Bundle release arm64 build 39 compilé et signé, sans occurrence de l’ancienne marque dans ses 93 fichiers. ZIP vérifié par CRC et comparaison de contenu ; DMG monté en lecture seule avec 93 fichiers/liens et permissions identiques au bundle, signature stricte valide, raccourci Applications et icône de volume présents. Contrôle natif dans une copie identique : fenêtre iTelier en français, chemin de sauvegarde sous `Application Support/iTelier`, chiffrement conservé sur OFF. Le dossier historique de données locales a été déplacé ; aucune commande de sauvegarde ou restauration réelle lancée.
+
 ## DMG d’installation — build 38
 
 `scripts/build-dmg.sh` crée une image HFS+ compressée en lecture seule depuis le bundle existant, avec un raccourci vers Applications et l’icône de volume de l’app. Le script refuse un bundle dont la signature stricte échoue, travaille dans un dossier temporaire et ne remplace l’image finale qu’après vérification de son intégrité. GitHub Actions produit désormais le ZIP et le DMG dans le même artifact, sans publier de Release automatiquement.
@@ -32,7 +42,7 @@ Compilation release réussie et signature stricte vérifiée. Contrôle natif sa
 
 ## Build 36 — iTelier et résultat réel de la restauration
 
-Le nom définitif est **iTelier** : produit SwiftPM, bundle, exécutable, menus et textes français/anglais, exports, documentation de lancement et archive CI. L’identifiant de bundle, les modules internes et les dossiers existants sont conservés pour retrouver les préférences, sauvegardes et références. Les rapports iTelier de schéma 2/3 sont importables ; les anciens noms ReWork et ReScope restent acceptés avec les mêmes contrôles d’identité et de masquage.
+Le nom visible devient **iTelier** dans ce build : produit SwiftPM, bundle, exécutable, menus et textes français/anglais, exports, documentation de lancement et archive CI. À cette étape, les identifiants internes et dossiers historiques étaient encore conservés. Leur migration complète est ajoutée au build 39. Les rapports de schéma 2/3 des versions précédentes restent acceptés avec les mêmes contrôles d’identité et de masquage.
 
 Le journal de l’incident signalé contenait `Unable to fetch Yonkers ticket`, `Unable to successfully restore device`, puis `DONE`, avec un code de sortie 0. Ce résultat était présenté à tort comme une réussite. Le suivi exige désormais le message terminal de l’appareil `Status: Restore Finished`, un code 0 et aucune erreur fatale. `DONE` ou une progression de 100 % ne suffisent plus. Le verdict persiste même lorsque les dernières lignes remplacent le message terminal dans le journal borné ; les anciens états sont réévalués à la lecture. Une fin confirmée s’appelle **Installation du système terminée** et rappelle que le démarrage de l’appareil peut encore continuer. Ce correctif ne résout pas l’échec de signature du composant Yonkers et ne garantit pas la récupération de l’appareil.
 
@@ -123,7 +133,7 @@ Les tuiles de navigation ont une zone arrondie continue couvrant leur intérieur
 
 | Vérification | Résultat et portée |
 | --- | --- |
-| Compilation de l’app | Bundle release `dist/ReScope.app` construit pour `arm64`. Le bundle avec outils USB embarqués demande macOS 14 ; la bibliothèque Swift seule conserve sa cible macOS 13. Cette cible est une cible de compilation, sans essai sur tous les systèmes ou architectures pris en charge. |
+| Compilation de l’app | Bundle release `dist/iTelier.app` construit pour `arm64`. Le bundle avec outils USB embarqués demande macOS 14 ; la bibliothèque Swift seule conserve sa cible macOS 13. Cette cible est une cible de compilation, sans essai sur tous les systèmes ou architectures pris en charge. |
 | Signature | Signature ad hoc et vérification stricte `codesign --verify --strict` réussies. Aucun certificat Developer ID ni notarisation. |
 | Tests du cœur | Les 39 méthodes existantes ont réussi via `bash scripts/test-core.sh`, sans échec. Ce Mac dispose des Command Line Tools ; XCTest n’y est pas disponible et `swift test` n’a pas été exécuté avec succès localement. |
 | Interface sombre | Tableau de bord observé dans une instance neuve du bundle : cartes, halo cyan et trois PNG transparents chargés. Après déverrouillage du Mac, les écrans natifs Check et Restaurer ont été vérifiés visuellement : table, badges et commandes d’export du Check ; prérequis et bouton Continuer désactivé en démonstration dans Restaurer. |
@@ -147,7 +157,7 @@ Certains paquets Apple Command Line Tools incluent Swift et le SDK macOS, mais o
 bash scripts/test-core.sh
 ```
 
-Ce script compile les sources réelles de `ReScopeCore` et les méthodes du fichier `Tests/ReScopeCoreTests/CoreValidationTests.swift`. Il conserve les corps des tests et leurs assertions, remplace seulement les imports XCTest et ajoute des assertions compatibles ainsi qu’un point d’entrée temporaire. Il découvre chaque méthode `test…()` et refuse les signatures qu’il ne sait pas exécuter. Toute assertion échouée ou exception imprévue produit un code de sortie non nul. Swift 6 ou plus récent et Python 3 sont nécessaires ; aucun paquet ni outil iOS n’est installé.
+Ce script compile les sources réelles de `iTelierCore` et les méthodes du fichier `Tests/iTelierCoreTests/CoreValidationTests.swift`. Il conserve les corps des tests et leurs assertions, remplace seulement les imports XCTest et ajoute des assertions compatibles ainsi qu’un point d’entrée temporaire. Il découvre chaque méthode `test…()` et refuse les signatures qu’il ne sait pas exécuter. Toute assertion échouée ou exception imprévue produit un code de sortie non nul. Swift 6 ou plus récent et Python 3 sont nécessaires ; aucun paquet ni outil iOS n’est installé.
 
 Le dossier temporaire contient le binaire et le cache de compilation, puis est supprimé à la fin. Le runner n’a pas les fonctions avancées de XCTest, telles que les fixtures `setUp`, les expectations, les tests de performance ou la découverte de plusieurs classes. Une évolution de la suite qui utilise ces fonctions doit adapter le runner ; la CI conserve XCTest comme exécution de référence.
 
@@ -161,7 +171,7 @@ Le test de résolution des outils vérifie la priorité du répertoire `Contents
 
 ## Vérifications de la version 0.1.2
 
-- Menus natifs : « À propos de ReScope », « Masquer ReScope », « Quitter ReScope », Édition, Présentation, Fenêtre et Aide observés en français.
+- Menus natifs : « À propos de iTelier », « Masquer iTelier », « Quitter iTelier », Édition, Présentation, Fenêtre et Aide observés en français.
 - AppleDB réel : 63 versions compatibles avec iPhone18,1 dont 44 bêtas/RC ; iOS 27.2 bêta 2 (24B5089g), 13 029 948 451 octets, figure dans la liste native. Versions non signées visibles par défaut.
 - Panne d’une source, déduplication, association stricte au modèle, exclusion des OTA et liens non Apple, état de signature et version numérique des bêtas couverts par les tests.
 - Téléchargement natif : choix d’un dossier temporaire via le panneau français, plus de 140 Mo reçus directement de updates.cdn-apple.com, progression visible, annulation volontaire et dossier de test redevenu vide. Le bouton Télécharger reste actif en aperçu. Aucun firmware de plusieurs Go téléchargé intégralement lors de cette validation.
@@ -180,7 +190,7 @@ Le manifeste réel de l’IPSW 27.2 bêta 2 pour iPhone18,1 a été lu par requ�
 
 Essais natifs effectués sur le build 0.1.3 :
 
-- La configuration affiche `Téléchargements/ReScope`, avec Modifier et Ouvrir. Le dossier a été créé au clic Télécharger et ouvert dans le Finder après annulation ; le Finder affiche zéro élément.
+- La configuration affiche `Téléchargements/iTelier`, avec Modifier et Ouvrir. Le dossier a été créé au clic Télécharger et ouvert dans le Finder après annulation ; le Finder affiche zéro élément.
 - Le catalogue iPhone18,1 affiche iOS 27.2 bêta 2 et les deux actions Télécharger / Restaurer. Le téléchargement démarre directement, sans sélecteur de destination ; 2 Mo étaient déjà reçus depuis Apple lors de la première observation, puis l’essai a été annulé. Aucun appareil n’était détecté pendant cet essai ; Restaurer est donc correctement désactivé.
 - Le rapport s’ouvre depuis Configuration et Activité ; son export natif dans un dossier temporaire produit un JSON valide. La description saisie apparaît dans l’aperçu. Le bouton Envoyer ouvre le partage natif (Mail, Messages, etc.) ; le menu a été refermé sans transmission.
 - Un SIGKILL de l’interface au repos, après annulation du téléchargement, produit au lancement suivant la bannière d’interruption et un rapport `unexpectedExit`. Une fermeture normale ultérieure ne produit pas une nouvelle alerte au redémarrage.
@@ -190,7 +200,7 @@ Essais natifs effectués sur le build 0.1.3 :
 
 Les 39 tests du cœur passent. Six tests supplémentaires couvrent les clés réelles de composants avec des valeurs synthétiques : provenance exacte, masquage déclaré, identifiant brut conservé entier, exclusion des séries du chargeur, distinction entre service retiré/lecture échouée/champ absent, rejet de données binaires et placeholders, contradictions entre sources, filtrage des noms de pilotes et absence d’identifiants dans les résumés d’erreur.
 
-Des lectures USB en mode normal sur l’iPhone18,1 sous iOS 27.2 ont fourni les réponses réelles d’AppleSmartBattery, product, AppleH16CamIn et MobileGestalt. Un exécutable temporaire utilisant les sources réelles de ReScopeCore a vérifié la récupération de douze identifiants : carte logique, batterie, avant, arrière, ultra grand-angle, téléobjectif, infrarouge, projecteur, LiDAR, dalle, vitre, lumière ambiante. Seuls les états et longueurs ont été imprimés. MobileGestaltDeprecated est reconnu comme non pris en charge. Les données privées restent hors du dépôt et les tests versionnés utilisent uniquement des séries synthétiques.
+Des lectures USB en mode normal sur l’iPhone18,1 sous iOS 27.2 ont fourni les réponses réelles d’AppleSmartBattery, product, AppleH16CamIn et MobileGestalt. Un exécutable temporaire utilisant les sources réelles de iTelierCore a vérifié la récupération de douze identifiants : carte logique, batterie, avant, arrière, ultra grand-angle, téléobjectif, infrarouge, projecteur, LiDAR, dalle, vitre, lumière ambiante. Seuls les états et longueurs ont été imprimés. MobileGestaltDeprecated est reconnu comme non pris en charge. Les données privées restent hors du dépôt et les tests versionnés utilisent uniquement des séries synthétiques.
 
 Le bundle 0.1.4 a reconnu l’iPhone au lancement. Lors du premier essai natif du Check, l’appareil a disparu d’USB avant la relecture initiale ; l’erreur de connexion a été affichée, sans produire de rapport vide présenté comme réussi. Cette interruption ne constitue pas une validation du parcours natif complet.
 
@@ -230,7 +240,7 @@ Les 50 tests du cœur passent. Les trois nouveaux tests couvrent la distinction 
 
 Sur l’iPhone17,1 connecté, la réponse générale expose DeviceColor mais omet DeviceEnclosureColor ; la requête ciblée fournit le code 4. Le catalogue MobileDevices de macOS le résout en com.apple.iphone-16-pro-4. Dans l’app relancée, la carte affiche « iPhone 16 Pro » et la représentation système avec son cadre doré, de face. L’écran reste l’illustration système ; aucune capture du contenu de l’appareil n’a été demandée. Les images Apple sont chargées depuis macOS, sans copie dans le dépôt ou dans la distribution.
 
-Le menu garde les icônes grises pour les rubriques inactives, colorées au survol et pour la rubrique sélectionnée ; la sélection colorée hors survol a été observée dans la vue d’ensemble. Le skill rescope-glass-ui est installé dans le dossier personnel Codex et conservé dans le projet, avec un exemple SwiftUI autonome. Son validateur passe et l’exemple a été vérifié par swiftc -typecheck.
+Le menu garde les icônes grises pour les rubriques inactives, colorées au survol et pour la rubrique sélectionnée ; la sélection colorée hors survol a été observée dans la vue d’ensemble. Le skill itelier-glass-ui est installé dans le dossier personnel Codex et conservé dans le projet, avec un exemple SwiftUI autonome. Son validateur passe et l’exemple a été vérifié par swiftc -typecheck.
 
 ## 0.2.0 · build 25 · Guided tour, appearance, language and Dock
 
@@ -254,7 +264,7 @@ Storage uses matching data-partition total and available-byte fields, never mixe
 
 ## Build 29 · ReWork, fiches Batterie et Stockage
 
-- Nom visible et produit distribuable : **ReWork**. Identifiant de bundle, préférences et dossiers historiques conservés ; import de références compatible avec les exports ReScope et ReWork.
+- Nom visible et produit distribuable : **ReWork**. Identifiant de bundle, préférences et dossiers historiques conservés ; import de références compatible avec les exports iTelier et ReWork.
 - Cartes Batterie et Stockage de même hauteur et entièrement cliquables. Batterie : jauge native, capacités en mAh, cycles, tension, intensité, puissance calculée et série copiables ; rafraîchissement facultatif toutes les 15 secondes et export texte sans identifiants. Les capacités imbriquées dans `IORegistry.BatteryData` sont lues. Le champ `GasGauge.FullChargeCapacity` peut être un pourcentage et n’est jamais présenté comme des mAh.
 - Stockage : sections Répartition, Mémoire flash et Caractéristiques techniques. `com.apple.disk_usage.factory` fournit les catégories supplémentaires ; `installation_proxy` fournit les tailles agrégées des applications et de leurs documents. Les noms des applications restent dans le helper et ne sont ni retournés ni enregistrés. PhotoUsage et CameraUsage ne sont jamais additionnés. Les compteurs incohérents ne produisent pas une répartition inventée.
 - Espace utilisable : priorité à `AmountDataAvailable`, car `TotalDataAvailable` surestimait l’espace disponible sur l’appareil de validation. Les volumes système et données sont additionnés uniquement lorsque les deux couples capacité/disponible sont valides. L’espace purgeable n’est pas déduit d’une différence entre compteurs.

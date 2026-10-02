@@ -35,10 +35,14 @@ jobs:
           bash scripts/build-app.sh
       - name: Archive bundle with executable permissions
         run: ditto -c -k --keepParent dist/iTelier.app dist/iTelier-macOS.zip
+      - name: Create and verify installation disk image
+        run: bash scripts/build-dmg.sh
       - name: Upload development build
         uses: actions/upload-artifact@v7
         with:
           name: iTelier-macOS-${{ runner.arch }}
-          path: dist/iTelier-macOS.zip
+          path: |
+            dist/iTelier-macOS.zip
+            dist/iTelier-macOS-*.dmg
           if-no-files-found: error
           retention-days: 14

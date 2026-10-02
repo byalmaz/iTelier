@@ -1,5 +1,11 @@
 # Tests du cœur
 
+## DMG d’installation — build 38
+
+`scripts/build-dmg.sh` crée une image HFS+ compressée en lecture seule depuis le bundle existant, avec un raccourci vers Applications et l’icône de volume de l’app. Le script refuse un bundle dont la signature stricte échoue, travaille dans un dossier temporaire et ne remplace l’image finale qu’après vérification de son intégrité. GitHub Actions produit désormais le ZIP et le DMG dans le même artifact, sans publier de Release automatiquement.
+
+Validation locale arm64 : image 0.2.0 build 38 créée, somme de contrôle vérifiée, puis montée en lecture seule sans ouvrir l’app. Signature `codesign --verify --deep --strict` valide ; **93 fichiers et liens du bundle identiques**, y compris leurs permissions ; raccourci `/Applications`, version et icône de volume vérifiés. Image démontée après contrôle. Aucun changement de code applicatif ni commande sur un appareil.
+
 ## Première exécution GitHub Actions — compatibilité XCTest
 
 Le champ de fixture `hash`, de type String, entrait en conflit avec la propriété `NSObject.hash` héritée par le véritable XCTestCase. La compilation `swift test` sur GitHub échouait avant d’exécuter les tests. Le champ s’appelle désormais `firmwareHash`. Le substitut utilisé par `test-core.sh` hérite lui aussi de NSObject pour détecter ce type de conflit sur les installations sans XCTest.

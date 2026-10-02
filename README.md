@@ -68,7 +68,15 @@ Le script produit `dist/iTelier.app` pour l’architecture du Mac qui compile. I
 
 Dans un environnement qui empêche SwiftPM de créer son sandbox imbriqué, le script accepte l’option explicite `RESCOPE_SWIFT_DISABLE_SANDBOX=1 bash scripts/build-app.sh`. Le sandbox SwiftPM reste actif par défaut, notamment dans la CI.
 
-Le workflow [macOS build](.github/workflows/macos.yml) exécute les tests, compile l’app et dépose une archive de développement en artifact GitHub Actions. Il ne publie pas de release automatiquement.
+Pour créer une image d’installation depuis le bundle déjà compilé :
+
+```sh
+bash scripts/build-dmg.sh
+```
+
+Le fichier `dist/iTelier-macOS-arm64.dmg` (ou `x86_64` sur Intel) contient l’app et un raccourci vers Applications. Ouvrir le DMG, puis faire glisser iTelier dans Applications. Le script vérifie la signature du bundle et l’intégrité de l’image avant de remplacer un DMG précédent.
+
+Le workflow [macOS build](.github/workflows/macos.yml) exécute les tests, compile l’app et dépose une archive ZIP et un DMG de développement en artifact GitHub Actions. Il ne publie pas de release automatiquement.
 
 ## Connecter un appareil réel
 

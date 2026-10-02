@@ -1,8 +1,13 @@
 # iTelier
 
-iTelier is a native, open-source macOS app for inspecting Apple devices, browsing firmware versions, downloading Apple-hosted IPSWs and restoring an IPSW. It presents the data it can actually read, with explicit limits rather than an invented authenticity score.
+**The free, open-source alternative to 3uTools and iMazing on Mac.** iTelier is a native macOS app to inspect an iPhone or iPad, make local backups, browse firmware versions, download Apple-hosted IPSWs and restore them. It presents the data it can actually read, with explicit limits rather than an invented authenticity score.
 
-iTelier est une première version d’application macOS en SwiftUI. Elle propose un **Check** de l’appareil, des **sauvegardes locales** et une **restauration IPSW**, depuis un fichier local ou une version téléchargée avec son catalogue. Son interface associe un fond indigo continu, des cartes translucides, des halos cyan, des icônes vectorielles en verre irisé et des boutons jaunes. Le projet utilise sa propre identité visuelle et ne reprend aucun logo ou asset de 3uTools ou CleanMyMac.
+**L’alternative libre et gratuite à 3uTools et iMazing sur Mac.** iTelier est une première version d’application macOS en SwiftUI. Elle propose un **Check** de l’appareil, des **sauvegardes locales** et une **restauration IPSW**, depuis un fichier local ou une version téléchargée avec son catalogue. Son interface associe un fond indigo continu, des cartes translucides, des halos cyan, des icônes vectorielles en verre irisé et des boutons jaunes. Le projet utilise sa propre identité visuelle et ne reprend aucun logo ni asset d’un autre logiciel.
+
+- **Libre et gratuit** : code ouvert sous licence MIT, que chacun peut lire, vérifier et améliorer.
+- **Natif sur Mac** : écrit en Swift et SwiftUI, avec les outils USB intégrés au bundle.
+- **Sans compte** : vos sauvegardes et rapports restent sur votre Mac. Seuls les catalogues de versions et les firmwares d’Apple transitent par le réseau.
+- **Honnête** : une donnée illisible reste indiquée comme telle, sans note d’authenticité inventée.
 
 ## État du projet
 
@@ -136,7 +141,7 @@ Voir [le guide GitHub](docs/github-publication.md) pour le contenu du dépôt et
 
 Le nom définitif de l’app est **iTelier**. Le [fichier de licence](LICENSE) couvre le code du projet sous licence MIT ; les outils externes conservent leurs licences respectives.
 
-Projet indépendant, sans affiliation avec Apple, 3uTools ou MacPaw. iPhone, iPad et macOS sont des marques d’Apple ; CleanMyMac est un produit de MacPaw.
+Projet indépendant, sans affiliation avec Apple ni avec les éditeurs de 3uTools et d’iMazing. iPhone, iPad et macOS sont des marques d’Apple ; 3uTools et iMazing appartiennent à leurs propriétaires respectifs.
 
 ## Sauvegardes locales
 

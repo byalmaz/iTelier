@@ -4,7 +4,7 @@ Direction UX et visuelle retenue au 1er octobre 2026.
 
 ReScope est une application native macOS 13 et versions suivantes, réalisée avec SwiftUI. Sa première fonction est la restauration d’un iPhone ou d’un iPad à partir d’un fichier IPSW. Sa seconde fonction est un contrôle de l’appareil inspiré du rapport fourni dans la capture utilisateur. Le projet est destiné à GitHub, avec une licence MIT retenue provisoirement.
 
-L’objectif de l’interface est de rendre une opération technique compréhensible, de réduire les erreurs de sélection et de montrer précisément ce que l’application a pu contrôler. Les fonctions de 3uTools servent de référence fonctionnelle. CleanMyMac sert de référence pour la hiérarchie et la qualité de présentation. ReScope conserve son propre nom, ses propres composants et ses propres illustrations.
+L’objectif de l’interface est de rendre une opération technique compréhensible, de réduire les erreurs de sélection et de montrer précisément ce que l’application a pu contrôler. Les fonctions de 3uTools servent de référence fonctionnelle. ReScope conserve son propre nom, ses propres composants et ses propres illustrations.
 
 ## Hiérarchie et navigation
 
@@ -21,7 +21,7 @@ La vue d’ensemble s’organise en une grille avec une grande carte appareil et
 
 Chaque écran possède une action dominante. Un écran de contrôle ne lance pas automatiquement une restauration. Le contenu descriptif, le résultat des vérifications et les boutons d’action doivent être visuellement séparés.
 
-La documentation de Smart Care décrit un parcours analyse, présentation des résultats en tuiles, consultation des détails et exécution des actions choisies. Ce principe de dévoilement progressif convient à ReScope, avec des précautions supplémentaires pour une opération qui efface des données. Source : [MacPaw — Smart Care](https://macpaw.com/support/cleanmymac/knowledgebase/smart-care).
+Le parcours suit un dévoilement progressif : analyse, présentation des résultats en tuiles, consultation des détails, puis exécution des actions choisies. Il reçoit des précautions supplémentaires pour une opération qui efface des données.
 
 ## Analyse de la capture du rapport de vérification
 
@@ -100,13 +100,13 @@ Les tutoriels de 3uTools distinguent l’import du firmware, les modes de restau
 
 ## Originalité visuelle
 
-La direction retenue s’appuie sur la capture CleanMyMac fournie : un **fond indigo continu**, une **sidebar intégrée**, des **cartes de verre gris violet**, une **typographie grande et légère**, des **halos cyan** et des **boutons principaux jaunes**. La représentation de l’appareil et les icônes en volume sont des créations originales pour ReScope. Le nom, le logo et les illustrations appartiennent à sa propre identité.
+La direction retenue associe un **fond indigo continu**, une **sidebar intégrée**, des **cartes de verre gris violet**, une **typographie grande et légère**, des **halos cyan** et des **boutons principaux jaunes**. La représentation de l’appareil et les icônes en volume sont des créations originales pour ReScope. Le nom, le logo et les illustrations appartiennent à sa propre identité.
 
 Le fond principal et la sidebar partagent l’indigo `#1C1533`. Leur séparation repose sur l’espacement et la hiérarchie de navigation. L’état sélectionné utilise une surface lumineuse discrète et un libellé lisible. Les cartes superposent un gradient blanc translucide d’environ 8 à 13 %, un contour clair fin et des angles arrondis. Ces surfaces restent dans la même gamme sombre que la fenêtre.
 
 Le texte principal est presque blanc; les descriptions utilisent un lavande clair `#C6C1D8`. Le cyan `#43D6F1` éclaire les halos, les symboles et certaines informations. Le jaune `#FFD731`, associé à un texte indigo, attire l’attention sur l’action principale. Les boutons secondaires reprennent le verre lavande et son contour clair. La confirmation finale d’effacement conserve un traitement corail distinct et un libellé destructif explicite.
 
-L’inspiration porte sur les principes : contenu aéré, titre lisible, action centrale, résultats répartis en cartes et détails accessibles progressivement. Le site officiel de [CleanMyMac](https://cleanmymac.com/) et la documentation de [Smart Care](https://macpaw.com/support/cleanmymac/knowledgebase/smart-care) constituent les références visuelles et de parcours.
+Les principes retenus : contenu aéré, titre lisible, action centrale, résultats répartis en cartes et détails accessibles progressivement.
 
 La grille d’accueil donne un poids visuel fort à l’appareil et rend immédiatement visibles les deux fonctions initiales. L’illustration de l’iPhone ou de l’iPad utilise un volume métallique sombre, des reflets lavande et un éclairage cyan. Les symboles de navigation et de fonctions suivent le même langage de volume et de lumière. L’illustration est décorative; les valeurs de batterie, les états et les résultats proviennent des données réellement lues.
 
@@ -147,8 +147,6 @@ Les lectures et les journaux restent locaux par défaut. Les erreurs techniques 
 
 ## Sources primaires
 
-- [MacPaw — Smart Care : analyse, résultats, détails et actions](https://macpaw.com/support/cleanmymac/knowledgebase/smart-care)
-- [CleanMyMac — site officiel](https://cleanmymac.com/)
 - [3uTools — fonctionnement du rapport de vérification](https://www.3u.com/tutorial/articles/7614/3utools-idevice-verification-let-you-check-if-your-idevice-is-original)
 - [3uTools — Pro Flash, import du firmware et versions signées](https://www.3u.com/tutorial/details/8806/everything-you-need-to-know-about-pro-flash-on-3utools)
 - [3uTools — préparation à la restauration](https://www.3u.com/tutorial/articles/7/3utools-flashes-ios-in-pro-mode-tutorial)

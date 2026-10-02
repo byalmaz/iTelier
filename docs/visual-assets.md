@@ -45,7 +45,7 @@ Scene/backdrop: genuinely transparent background with real alpha transparency. N
 Constraints: exactly one smartphone, no Apple logo, no brand logo, no camera brand detail, no lettering, no watermark, no cable, no extra objects. Do not generate an application interface or entire UI.
 ```
 
-L’illustration illustre l’appareil dans la vue d’ensemble et ne constitue pas une photographie du matériel connecté. Elle a été produite pour ce projet et ne reprend aucun artwork de MacPaw ou 3uTools.
+L’illustration illustre l’appareil dans la vue d’ensemble et ne constitue pas une photographie du matériel connecté. Elle a été produite pour ce projet et ne reprend aucun artwork d’un autre logiciel.
 
 ## RestoreIcon.png et CheckIcon.png
 

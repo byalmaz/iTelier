@@ -1,0 +1,150 @@
+{
+  "schemaVersion": 1,
+  "source": "https://ghcr.io/v2/homebrew/core",
+  "packages": {
+    "libimobiledevice": {
+      "arm64_sonoma": {
+        "reference": "1.4.0.arm64_sonoma",
+        "sha256": "ac0a39864d542e1b5d248efe7ee1bbb5dc58a2739dd248ec987dc7b794ef9fd9",
+        "size": 530391
+      },
+      "sonoma": {
+        "reference": "1.4.0.sonoma",
+        "sha256": "aa40670dbbdadabc7f035fe2ea17da68a1dab8937a4f1c0429c0a7fd58c108f5",
+        "size": 490742
+      }
+    },
+    "libimobiledevice-glue": {
+      "arm64_sonoma": {
+        "reference": "1.3.2.arm64_sonoma",
+        "sha256": "8839511835adac2934787a8a575c3dd6e02186d60db24ddb9c9aeed8a8069883",
+        "size": 76424
+      },
+      "sonoma": {
+        "reference": "1.3.2.sonoma",
+        "sha256": "0b08285aeb078331e4240420422e5330d91aba640b21c0d1f06c470deb6b9eb6",
+        "size": 73505
+      }
+    },
+    "libplist": {
+      "arm64_sonoma": {
+        "reference": "2.7.0.arm64_sonoma",
+        "sha256": "06036e6de87c0a8bfc917d72f2af3f63ea6eb557391035782ca8bddb5506c342",
+        "size": 171271
+      },
+      "sonoma": {
+        "reference": "2.7.0.sonoma",
+        "sha256": "1ee2a67e37b9aa465a9ce313101ab32cd3bc4959c6613c6cf844d01ce078adc3",
+        "size": 168643
+      }
+    },
+    "libusbmuxd": {
+      "arm64_sonoma": {
+        "reference": "2.1.1.arm64_sonoma",
+        "sha256": "b3dfe62a2e25c35da59e32db101d490974d93a1a6ed30755bb4380a7d947a63e",
+        "size": 58922
+      },
+      "sonoma": {
+        "reference": "2.1.1.sonoma",
+        "sha256": "f20787b876fc3b9c8412d92ac2adaeb3dc2526155d327b0118534bb06c208079",
+        "size": 51311
+      }
+    },
+    "libtasn1": {
+      "arm64_sonoma": {
+        "reference": "4.21.0.arm64_sonoma",
+        "sha256": "2dceab4bf93738bd4f3efd9063a5cf60ccd96e5b0e5a3ac9fca508e42b5f3336",
+        "size": 166854
+      },
+      "sonoma": {
+        "reference": "4.21.0.sonoma",
+        "sha256": "71c5d144fdce79e4cfe7bbd5863da5171a13d892a26475c5ea183e7e3ef21d8f",
+        "size": 154405
+      }
+    },
+    "libtatsu": {
+      "arm64_sonoma": {
+        "reference": "1.0.5.arm64_sonoma",
+        "sha256": "efb9b3d41f8e825551a9047fd46788477ee53b3fa40f1c032bb74297be7ca21b",
+        "size": 50095
+      },
+      "sonoma": {
+        "reference": "1.0.5.sonoma",
+        "sha256": "3c64e4c3dec2b31b5d9a228073f08997d2efa813fe6ec431eba870112995fa08",
+        "size": 44247
+      }
+    },
+    "openssl@3": {
+      "arm64_sonoma": {
+        "reference": "3.6.4.arm64_sonoma",
+        "sha256": "01887accd1964e9940ba516509e948eed9850d58d55cc02ca52c503435750685",
+        "size": 10938984
+      },
+      "sonoma": {
+        "reference": "3.6.3.sonoma",
+        "sha256": "f81141067a5482b149b6c936fc4c901d19e784a1800810da2f4f7a4ddeaf839d",
+        "size": 10079551
+      }
+    },
+    "libirecovery": {
+      "arm64_sonoma": {
+        "reference": "1.3.1.arm64_sonoma",
+        "sha256": "d248aaefd0b49f856770bbc48c531b624b9e64ae203af153dc2f3be3cadeae49",
+        "size": 88804
+      },
+      "sonoma": {
+        "reference": "1.3.1.sonoma",
+        "sha256": "139905a8f27754ed0ad2546491a171679fc2823e1060dbf2e1ff7e09a3b9de8e",
+        "size": 77542
+      }
+    },
+    "libzip": {
+      "arm64_sonoma": {
+        "reference": "1.11.4_1.arm64_sonoma",
+        "sha256": "41df5da85bc172a781efd6f32c46708f7a88f9b1faa82577cec64992f5254f5b",
+        "size": 145191
+      },
+      "sonoma": {
+        "reference": "1.11.4_1.sonoma",
+        "sha256": "5b808617db89e546465d756a8d8e0ee7068806e7dc58ae06952eea528ebdce8f",
+        "size": 142784
+      }
+    },
+    "xz": {
+      "arm64_sonoma": {
+        "reference": "5.8.3.arm64_sonoma",
+        "sha256": "0a6e40dbeea3358a1277f347ef9b892070096a79a81cda90edfedbfe721c4ba3",
+        "size": 772218
+      },
+      "sonoma": {
+        "reference": "5.8.3.sonoma",
+        "sha256": "fcd2df6962b5b94ef14232d02df71ee0b329482c2d8478942e07287f016ebe73",
+        "size": 751086
+      }
+    },
+    "zstd": {
+      "arm64_sonoma": {
+        "reference": "1.5.7_1.arm64_sonoma",
+        "sha256": "35b5150b27512a94ebaee7b4399aaa8adf42d247e6968319e4aeac3c05365281",
+        "size": 806449
+      },
+      "sonoma": {
+        "reference": "1.5.7_1.sonoma",
+        "sha256": "8b8656acd6f30bcbbb9a033ae840afea299c9f0852f71b7540492b0fe7a36742",
+        "size": 945523
+      }
+    },
+    "lz4": {
+      "arm64_sonoma": {
+        "reference": "1.10.0.arm64_sonoma.2",
+        "sha256": "bad7f434a13146990b5a021a020583b19d0fa9b082d5b8e36b31f517d512572b",
+        "size": 276415
+      },
+      "sonoma": {
+        "reference": "1.10.0.sonoma.1",
+        "sha256": "96c1ed07b013308a9c205a56c0232e45ae7da70e28200c9adb03ec78b294bffd",
+        "size": 291089
+      }
+    }
+  }
+}

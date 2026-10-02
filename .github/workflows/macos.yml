@@ -27,6 +27,8 @@ jobs:
         run: swift test
       - name: Test independent restore worker with an inert engine
         run: python3 scripts/test-restore-host.py
+      - name: Test runtime download integrity without network access
+        run: python3 scripts/test-runtime-bottles.py
       - name: Build development app bundle
         run: |
           python3 scripts/prepare-runtime.py

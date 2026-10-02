@@ -4,7 +4,13 @@
 
 Le champ de fixture `hash`, de type String, entrait en conflit avec la propriété `NSObject.hash` héritée par le véritable XCTestCase. La compilation `swift test` sur GitHub échouait avant d’exécuter les tests. Le champ s’appelle désormais `firmwareHash`. Le substitut utilisé par `test-core.sh` hérite lui aussi de NSObject pour détecter ce type de conflit sur les installations sans XCTest.
 
-Validation locale après correction : **115 tests réussis**, sans appareil, avec le substitut héritant de NSObject. L’exécution avec le véritable XCTest reste assurée par le workflow GitHub Actions.
+Validation locale après correction : **115 tests réussis**, sans appareil, avec le substitut héritant de NSObject. Sur GitHub, le [run 37013333359](https://github.com/byalmaz/iTelier/actions/runs/37013333359) a ensuite réussi `swift test` et le test du helper inerte ; il s’est arrêté à la préparation des dépendances.
+
+## GitHub Actions — dépendances Sonoma épinglées
+
+La préparation interrogeait les formules Homebrew courantes, dont certains paquets Sonoma ne sont plus proposés. `brew fetch` ne fournissait pas les archives et le script essayait d’ouvrir un chemin vide. Le manifeste `scripts/runtime-bottles.json` épingle désormais les références, tailles et SHA-256 des paquets officiels Sonoma pour Apple Silicon et Intel. Le téléchargement passe directement par le registre public Homebrew, sans installation de Homebrew. La taille et l’empreinte sont vérifiées avant extraction ; les protections contre les chemins et liens sortant de l’archive restent actives. Les sources amont et leurs licences restent récupérées depuis les formules incluses dans chaque paquet.
+
+Validation locale : **24 paquets officiels téléchargés et vérifiés**, douze par architecture ; **six tests d’intégrité réussis**, dont cache corrompu, taille incorrecte, interruption réseau et lien symbolique. Préparation complète des sources et compilation du moteur arm64 réussies dans un dossier temporaire isolé, sans Homebrew ni commande sur un appareil. Les versions Intel OpenSSL 3.6.3 et lz4 1.10.0 (rebuild 1) sont distinctes des versions arm64 ; le téléchargement Intel est vérifié, sa compilation complète reste à valider sur un Mac Intel. Le workflow exécute également les six tests sans accès réseau.
 
 ## Build 38 — boutons d’information de la vue d’ensemble
 

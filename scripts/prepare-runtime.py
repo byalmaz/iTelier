@@ -3,7 +3,6 @@
 import concurrent.futures
 import hashlib
 import json
-import os
 from pathlib import Path
 import platform
 import re
@@ -12,26 +11,22 @@ import subprocess
 import tarfile
 import urllib.parse
 import urllib.request
+from runtime_bottles import load_bottles, retrieve_bottle
 
 project = Path(__file__).resolve().parent.parent
+if platform.system() != "Darwin" or platform.machine() not in ("arm64", "x86_64"):
+    raise SystemExit("Runtime preparation requires an Apple Silicon or Intel Mac.")
 tag = "arm64_sonoma" if platform.machine() == "arm64" else "sonoma"
 runtime = project / ".runtime" / tag
-names = ["libimobiledevice", "libimobiledevice-glue", "libplist", "libusbmuxd",
-         "libtasn1", "libtatsu", "openssl@3", "libirecovery", "libzip", "xz", "zstd", "lz4"]
-brew = shutil.which("brew")
-if brew is None:
-    raise SystemExit("Homebrew is required on the build machine to fetch official runtime bottles.")
-environment = dict(os.environ, HOMEBREW_NO_AUTO_UPDATE="1", HOMEBREW_NO_INSTALL_CLEANUP="1")
-subprocess.run([brew, "fetch", "--bottle-tag=" + tag] + names, env=environment, check=True)
+bottles = load_bottles(project / "scripts/runtime-bottles.json", tag)
 runtime.mkdir(parents=True, exist_ok=True)
-for name in names:
-    archive_path = Path(subprocess.check_output([brew, "--cache", "--bottle-tag=" + tag, name],
-                                                env=environment, text=True).strip())
+for name, bottle in bottles.items():
+    archive_path = retrieve_bottle(name, bottle, project / ".runtime/_bottles")
     # Bottles contain read-only files. Replace this generated package directory
     # instead of extracting over an earlier preparation or a partial extraction.
     if (runtime / name).exists():
         shutil.rmtree(runtime / name)
-    # Homebrew fetch verifies the bottle digest before it enters the cache.
+    # L'empreinte et la taille épinglées sont vérifiées avant toute extraction.
     with tarfile.open(archive_path) as archive:
         members = archive.getmembers()
         for member in members:

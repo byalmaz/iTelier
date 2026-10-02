@@ -32,7 +32,7 @@ Validation locale des 1er et 2 octobre 2026 : **115 tests du cœur réussis** et
 
 ## Compiler et lancer
 
-Prérequis de compilation : un Mac, Python 3, Homebrew et une toolchain Swift 6 ou plus récente compatible avec le SDK macOS. Homebrew sert uniquement à récupérer les paquets sur la machine de compilation ; il est inutile pour la détection USB ou la restauration sur le Mac qui exécute le bundle. Les outils en ligne de commande Apple suffisent lorsqu’ils incluent cette toolchain ; le projet ne nécessite pas de fichier `.xcodeproj` ni d’abonnement Apple Developer.
+Prérequis de compilation : un Mac, Python 3 et une toolchain Swift 6 ou plus récente compatible avec le SDK macOS. Le script récupère les paquets officiels Homebrew ciblés Sonoma directement depuis leur registre public, aux versions et empreintes épinglées dans [`scripts/runtime-bottles.json`](scripts/runtime-bottles.json). Homebrew n’a pas besoin d’être installé, sur la machine de compilation comme sur le Mac qui exécute le bundle. Les outils en ligne de commande Apple suffisent lorsqu’ils incluent cette toolchain ; le projet ne nécessite pas de fichier `.xcodeproj` ni d’abonnement Apple Developer.
 
 Depuis le dossier du projet :
 
@@ -47,6 +47,7 @@ Pour les tests, utiliser `swift test` avec Xcode complet. Si les Command Line To
 ```sh
 bash scripts/test-core.sh
 python3 scripts/test-restore-host.py
+python3 scripts/test-runtime-bottles.py
 ```
 
 Le runner nécessite Swift 6 ou plus récent et Python 3 ; il n’utilise aucun appareil connecté. Voir [les détails des tests](docs/testing.md).

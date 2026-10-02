@@ -1,0 +1,16 @@
+.DS_Store
+.build/
+.runtime/
+.swiftpm/
+dist/
+*.xcuserstate
+xcuserdata/
+*.ipsw
+*.shsh
+*.shsh2
+*.log
+reports/
+*.dSYM/
+.agents/claims.md
+video/build/
+video/out/

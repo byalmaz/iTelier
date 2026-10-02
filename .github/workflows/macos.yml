@@ -1,0 +1,42 @@
+name: macOS build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: macos-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Inspect Swift toolchain
+        run: swift --version
+      - name: Test core logic without a connected device
+        run: swift test
+      - name: Test independent restore worker with an inert engine
+        run: python3 scripts/test-restore-host.py
+      - name: Build development app bundle
+        run: |
+          python3 scripts/prepare-runtime.py
+          bash scripts/build-app.sh
+      - name: Archive bundle with executable permissions
+        run: ditto -c -k --keepParent dist/iTelier.app dist/iTelier-macOS.zip
+      - name: Upload development build
+        uses: actions/upload-artifact@v7
+        with:
+          name: iTelier-macOS-${{ runner.arch }}
+          path: dist/iTelier-macOS.zip
+          if-no-files-found: error
+          retention-days: 14

@@ -11,7 +11,7 @@
 
 ## État du projet
 
-Version de développement 0.2.0 (build 37), macOS 14 ou plus récent. Les outils USB embarqués sont issus des paquets officiels Homebrew ciblés Sonoma.
+Version de développement 0.2.0 (build 38), macOS 14 ou plus récent. Les outils USB embarqués sont issus des paquets officiels Homebrew ciblés Sonoma.
 
 - Application native, avec mode de démonstration pour explorer l’interface sans appareil.
 - Outils de détection USB, de diagnostic et de restauration libimobiledevice/libirecovery/idevicerestore inclus dans l’app, avec leurs bibliothèques.

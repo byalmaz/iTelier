@@ -98,8 +98,8 @@ final class CoreValidationTests: XCTestCase {
         XCTAssertEqual(device.family.systemName, "visionOS")
         XCTAssertFalse(device.family.supportsLocalBackup)
         let ipsw = FirmwareInfo(url: URL(fileURLWithPath: "/tmp/vision.ipsw"), version: "26.0", build: "23M1",
-            supportedProductTypes: [identifier], sizeBytes: 1000, sha256: hash, eraseHardwareModels: ["n301ap"])
-        let consent = RestoreApproval(deviceID: device.id, firmwareSHA256: hash, acknowledgedDataLoss: true)
+            supportedProductTypes: [identifier], sizeBytes: 1000, sha256: firmwareHash, eraseHardwareModels: ["n301ap"])
+        let consent = RestoreApproval(deviceID: device.id, firmwareSHA256: firmwareHash, acknowledgedDataLoss: true)
         XCTAssertThrowsError(try RestoreValidator.validateApproval(device: device, firmware: ipsw, approval: consent))
         let json = Data("""
         [{"identifier":"RealityDevice14,1","name":"Apple Vision Pro"},{"identifier":"Mac14,2","name":"Mac"}]
@@ -135,7 +135,7 @@ final class CoreValidationTests: XCTestCase {
         XCTAssertNil(DeviceInformation(device: device()).batteryPercent)
     }
 
-    private let hash = String(repeating: "a", count: 64)
+    private let firmwareHash = String(repeating: "a", count: 64)
 
     private func backupFixture(_ folder: URL, state: String = "finished", encrypted: Bool = false) throws {
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
@@ -663,12 +663,12 @@ final class CoreValidationTests: XCTestCase {
 
     private func firmware(boards: [String] = ["d63ap"], updateBoards: [String] = []) -> FirmwareInfo {
         FirmwareInfo(url: URL(fileURLWithPath: "/tmp/firmware.ipsw"), version: "18.0", build: "22A3354",
-                     supportedProductTypes: ["iPhone14,2"], sizeBytes: 1_000, sha256: hash,
+                     supportedProductTypes: ["iPhone14,2"], sizeBytes: 1_000, sha256: firmwareHash,
                      eraseHardwareModels: boards, updateVariants: Dictionary(uniqueKeysWithValues: updateBoards.map { ($0, RestoreMode.upgradeVariant) }))
     }
 
     private func approval(acknowledged: Bool = true) -> RestoreApproval {
-        RestoreApproval(deviceID: device().id, firmwareSHA256: hash, acknowledgedDataLoss: acknowledged)
+        RestoreApproval(deviceID: device().id, firmwareSHA256: firmwareHash, acknowledgedDataLoss: acknowledged)
     }
 
     private func manifest(erase: Bool = true, complete: Bool = true) throws -> Data {
@@ -971,7 +971,7 @@ final class CoreValidationTests: XCTestCase {
         let releases = try FirmwareCatalog.decodeFirmwares(data, identifier: "iPhone14,2")
         XCTAssertEqual(releases.count, 2)
         XCTAssertEqual(releases[0].fileSize, 8_412_876_800)
-        XCTAssertEqual(releases[0].sha256, hash)
+        XCTAssertEqual(releases[0].sha256, firmwareHash)
         XCTAssertTrue(releases[0].releaseDate != nil)
         XCTAssertFalse(releases[1].signed)
         XCTAssertNil(releases[1].sha256)
@@ -1019,14 +1019,14 @@ final class CoreValidationTests: XCTestCase {
     func testPreserveDataRequiresUpdateIdentityVersionAndSeparateApproval() throws {
         let target = device(version: "18.0", build: "22A3354")
         let ipsw = firmware(updateBoards: ["d63ap"])
-        let consent = RestoreApproval(deviceID: target.id, firmwareSHA256: hash, acknowledgedDataLoss: false,
+        let consent = RestoreApproval(deviceID: target.id, firmwareSHA256: firmwareHash, acknowledgedDataLoss: false,
                                       mode: .preserveData, acknowledgedPreservationRisk: true)
         XCTAssertEqual(try RestoreValidator.validateApproval(device: target, firmware: ipsw, approval: consent), "123456789")
         XCTAssertThrowsError(try RestoreValidator.validateApproval(device: target, firmware: firmware(), approval: consent))
         XCTAssertThrowsError(try RestoreValidator.validateApproval(device: device(), firmware: ipsw, approval: consent))
         XCTAssertThrowsError(try RestoreValidator.validateApproval(device: device(mode: .recovery, version: "18.0", build: "22A3354"), firmware: ipsw, approval: consent))
         XCTAssertThrowsError(try RestoreValidator.validateApproval(device: target, firmware: ipsw,
-            approval: RestoreApproval(deviceID: target.id, firmwareSHA256: hash, acknowledgedDataLoss: true, mode: .preserveData)))
+            approval: RestoreApproval(deviceID: target.id, firmwareSHA256: firmwareHash, acknowledgedDataLoss: true, mode: .preserveData)))
         let args = try RestoreValidator.arguments(ecid: "123456789", url: ipsw.url, mode: .preserveData, upgradeVariant: ipsw.upgradeVariant(for: target))
         XCTAssertEqual(args, ["--variant", "Customer Upgrade Install (IPSW)", "-y", "-P", "-i", "123456789", ipsw.url.path])
         XCTAssertFalse(args.contains("-e"))
@@ -1199,7 +1199,7 @@ final class CoreValidationTests: XCTestCase {
         FirmwareRelease(identifier: "iPhone14,2", version: "18.0", buildID: "22A3354",
                         url: URL(string: "https://updates.cdn-apple.com/\(scenario).ipsw")!,
                         fileSize: scenario == "size" ? 4 : 3, signed: true,
-                        sha256: scenario == "digest" ? hash : "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")
+                        sha256: scenario == "digest" ? firmwareHash : "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")
     }
 }
 

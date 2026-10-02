@@ -937,5 +937,12 @@ enum EnglishStrings {
         "Infos · À propos d’iTelier": "Info · About iTelier",
         "Un outil USB manque dans l’application. Réinstallez le bundle complet d’iTelier, puis relancez la détection.": "A USB tool is missing from the app. Reinstall the complete iTelier bundle, then retry detection.",
         "Un projet indépendant, pensé pour une interface soignée, des opérations transparentes et des données qui restent sous votre contrôle. Vous pouvez étudier, modifier et partager le code d’iTelier sous licence MIT.": "An independent project with a carefully designed interface, transparent operations and data under your control. You can study, modify and share iTelier's code under the MIT licence.",
+        "Informations sur la restauration": "About restoring",
+        "Informations sur la vérification": "About checking",
+        "Fermer l’aide": "Close help",
+        "Choisissez une version du système dans le catalogue ou un fichier déjà téléchargé. L’app vous guide ensuite dans les options disponibles pour votre appareil.": "Choose a system version from the catalogue or a file you have already downloaded. The app then guides you through the options available for your device.",
+        "Retrouvez les informations de votre appareil, l’état de sa batterie et les contrôles disponibles. Vous pouvez garder un rapport pour comparer vos prochains relevés.": "See your device information, battery status and available checks. Keep a report to compare with future readings.",
+        "Avant de réinstaller le système, gardez une sauvegarde récente. L’option de conservation des données ne garantit pas leur récupération si l’installation échoue.": "Keep a recent backup before reinstalling the system. The option to keep data does not guarantee its recovery if installation fails.",
+        "Une information manquante reste indiquée. Le Check ne modifie pas votre appareil et ne certifie pas l’origine de ses pièces.": "Missing information is always identified. A Check does not modify your device or certify the origin of its parts.",
     ]
 }

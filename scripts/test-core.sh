@@ -41,7 +41,8 @@ helpers = r'''
 // Minimal XCTest-compatible assertions used only by this temporary executable.
 // A failed assertion records a failure and the runner exits nonzero.
 var testFailures = 0
-class XCTestCase {}
+// Comme XCTestCase, hériter de NSObject pour détecter les conflits de propriétés.
+class XCTestCase: NSObject {}
 func XCTFail(_ message: String = "", file: StaticString = #filePath, line: UInt = #line) {
     testFailures += 1
     print("FAIL \(file):\(line): \(message)")

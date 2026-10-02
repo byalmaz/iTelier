@@ -257,6 +257,7 @@ struct WorkspaceView: View {
 
 struct OverviewView: View {
     @EnvironmentObject private var model: AppModel
+    @ViewState private var selectedHelp: OverviewHelpTopic?
     var body: some View {
         VStack(alignment: .leading, spacing: 23) {
             GeometryReader { geometry in
@@ -264,10 +265,10 @@ struct OverviewView: View {
                     deviceCard.frame(width: geometry.size.width * 0.38)
                     actionCard(title: L("Restaurer"), symbol: "arrow.triangle.2.circlepath", color: Palette.violet,
                                description: L("Choisissez la version du système à installer, ou utilisez un fichier déjà téléchargé."),
-                               button: L("Choisir une version"), primary: true) { model.openFirmwareBrowser() }
+                               button: L("Choisir une version"), primary: true, helpTopic: .restore) { model.openFirmwareBrowser() }
                     actionCard(title: L("Vérifier"), symbol: "checkmark.shield.fill", color: Palette.accent,
                                description: L("Faites le point sur son identité, sa batterie et les données accessibles."),
-                               button: model.currentReport == nil ? L("Lancer un Check") : L("Voir mon rapport"), primary: false) {
+                               button: model.currentReport == nil ? L("Lancer un Check") : L("Voir mon rapport"), primary: false, helpTopic: .check) {
                         if model.currentReport != nil { model.page = .check }
                         else { Task { await model.runCheck() } }
                     }
@@ -316,6 +317,7 @@ struct OverviewView: View {
                 }.frame(maxWidth: .infinity)
             }
         }
+        .sheet(item: $selectedHelp) { topic in OverviewHelpView(topic: topic) }
     }
     private var deviceCard: some View {
         ZStack(alignment: .topLeading) {
@@ -344,14 +346,22 @@ struct OverviewView: View {
         }.clipShape(RoundedRectangle(cornerRadius: 20))
             .overlay(RoundedRectangle(cornerRadius: 20).stroke(Palette.line, lineWidth: 1))
     }
-    private func actionCard(title: String, symbol: String, color: Color, description: String, button: String, primary: Bool, action: @escaping () -> Void) -> some View {
+    private func actionCard(title: String, symbol: String, color: Color, description: String, button: String, primary: Bool, helpTopic: OverviewHelpTopic, action: @escaping () -> Void) -> some View {
         Surface(padding: 22) {
             VStack(spacing: 12) {
-                HStack { Spacer(); Image(systemName: "info.circle.fill").foregroundStyle(Palette.secondary.opacity(0.4)).font(.system(size: 13)) }
+                HStack {
+                    Spacer()
+                    Button { selectedHelp = helpTopic } label: {
+                        Image(systemName: "info.circle.fill").font(.system(size: 13))
+                            .frame(width: 28, height: 28).contentShape(Circle())
+                    }.buttonStyle(.plain).foregroundStyle(Palette.secondary)
+                        .accessibilityLabel(helpTopic.accessibilityLabel).help(helpTopic.accessibilityLabel)
+                }
                 GlassIcon(systemName: symbol, size: 74, color: color)
                     .frame(width: 106, height: 85).padding(.top, 3)
                 Text(title).font(.system(size: 21, weight: .light))
                 Text(description).multilineTextAlignment(.center).font(.system(size: 13)).foregroundStyle(Palette.secondary).lineSpacing(4)
+                    .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 0)
                 Button(action: action) {
                     HStack { Spacer(minLength: 0); Text(button).lineLimit(1); Spacer(minLength: 0) }
@@ -364,5 +374,49 @@ struct OverviewView: View {
             Text(label).font(.system(size: 10)).foregroundStyle(Palette.secondary)
             Text(value).font(.system(size: 11, weight: .medium)).lineLimit(1)
         }.frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+private enum OverviewHelpTopic: String, Identifiable {
+    case restore, check
+    var id: String { rawValue }
+    var title: String { self == .restore ? L("Restaurer") : L("Vérifier") }
+    var symbol: String { self == .restore ? "arrow.triangle.2.circlepath" : "checkmark.shield.fill" }
+    var color: Color { self == .restore ? Palette.violet : Palette.accent }
+    var accessibilityLabel: String {
+        self == .restore ? L("Informations sur la restauration") : L("Informations sur la vérification")
+    }
+    var message: String {
+        self == .restore
+            ? L("Choisissez une version du système dans le catalogue ou un fichier déjà téléchargé. L’app vous guide ensuite dans les options disponibles pour votre appareil.")
+            : L("Retrouvez les informations de votre appareil, l’état de sa batterie et les contrôles disponibles. Vous pouvez garder un rapport pour comparer vos prochains relevés.")
+    }
+    var detail: String {
+        self == .restore
+            ? L("Avant de réinstaller le système, gardez une sauvegarde récente. L’option de conservation des données ne garantit pas leur récupération si l’installation échoue.")
+            : L("Une information manquante reste indiquée. Le Check ne modifie pas votre appareil et ne certifie pas l’origine de ses pièces.")
+    }
+}
+
+private struct OverviewHelpView: View {
+    let topic: OverviewHelpTopic
+    @Environment(\.dismiss) private var dismiss
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            HStack(spacing: 14) {
+                GlassIcon(systemName: topic.symbol, size: 42, color: topic.color).accessibilityHidden(true)
+                Text(topic.title).font(.system(size: 23, weight: .light))
+                Spacer()
+                Button { dismiss() } label: { CloseGlyph() }
+                    .buttonStyle(.plain).accessibilityLabel(L("Fermer l’aide")).keyboardShortcut(.cancelAction)
+            }
+            Text(topic.message).fixedSize(horizontal: false, vertical: true)
+            Text(topic.detail).foregroundStyle(Palette.secondary).fixedSize(horizontal: false, vertical: true)
+            HStack {
+                Spacer()
+                Button(L("Compris")) { dismiss() }.buttonStyle(QuietButtonStyle())
+            }
+        }.font(.system(size: 13)).lineSpacing(4).padding(26).frame(width: 480)
+            .foregroundStyle(Palette.ink).background(Palette.canvas)
     }
 }

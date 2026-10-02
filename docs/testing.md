@@ -1,5 +1,17 @@
 # Tests du cœur
 
+## Première exécution GitHub Actions — compatibilité XCTest
+
+Le champ de fixture `hash`, de type String, entrait en conflit avec la propriété `NSObject.hash` héritée par le véritable XCTestCase. La compilation `swift test` sur GitHub échouait avant d’exécuter les tests. Le champ s’appelle désormais `firmwareHash`. Le substitut utilisé par `test-core.sh` hérite lui aussi de NSObject pour détecter ce type de conflit sur les installations sans XCTest.
+
+Validation locale après correction : **115 tests réussis**, sans appareil, avec le substitut héritant de NSObject. L’exécution avec le véritable XCTest reste assurée par le workflow GitHub Actions.
+
+## Build 38 — boutons d’information de la vue d’ensemble
+
+Les icônes **i** des cartes Restaurer et Vérifier sont désormais des boutons avec une zone de clic de 28 points, un libellé d’accessibilité distinct et une aide intégrée à la fenêtre. L’aide reste disponible sans appareil connecté et se ferme avec **X**, **Compris** ou la commande d’annulation. Les textes sont traduits en anglais. Les descriptions des cartes gardent leur hauteur complète pour éviter une troncature.
+
+Compilation release arm64 réussie et signature stricte vérifiée. Contrôle natif en français, apparence claire et sans appareil : ouverture des deux aides, fermeture par X et Compris, retour à la vue d’ensemble et descriptions entièrement lisibles. Couverture des traductions et absence de doublons vérifiées. Archive contrôlée : CRC, version 38, permissions exécutables et identité du binaire. Aucun test de sauvegarde ou de restauration réelle ; la logique du cœur est inchangée.
+
 ## Build 37 — choix du chiffrement mémorisé
 
 Le bouton **Chiffrer la sauvegarde** utilise une préférence persistante, avec **OFF** comme choix initial. La navigation et la relance ne réactivent plus le choix automatiquement. Seule cette préférence est enregistrée ; les mots de passe restent temporaires. Le chiffrement déjà actif sur l’appareil n’est pas désactivé par ce bouton.

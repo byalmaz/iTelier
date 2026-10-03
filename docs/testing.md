@@ -1,5 +1,11 @@
 # Tests du cœur
 
+## Première préversion publiée — build 39
+
+La [préversion v0.2.0-beta.1](https://github.com/byalmaz/iTelier/releases/tag/v0.2.0-beta.1), publiée le 3 octobre 2026, contient le DMG arm64 du build 39 et son fichier SHA-256. Le tag cible le commit `91bd8c643f5ebe10971a52af04121dd8a7520041`, dont le workflow macOS a réussi. Les deux assets sont publics ; la taille et l’empreinte calculée par GitHub correspondent aux fichiers locaux. Le DMG a été monté en lecture seule : les 93 fichiers/liens et leurs permissions sont identiques au bundle signé, le raccourci Applications est correct et l’image a été démontée après contrôle.
+
+Cette publication ne modifie pas le code applicatif et n’ajoute aucune validation sur appareil physique. Le bundle reste signé ad hoc et non notarié.
+
 ## Build 39 — renommage complet et migration
 
 Les dossiers, modules SwiftPM, helpers, ressources, identifiant du bundle (`com.itelier.app`), variables d’environnement et documentation portent désormais le nom iTelier. Les ressources des fonds d’écran sont sous `Sources/iTelier/Resources/Wallpapers`. Le script d’assemblage choisit uniquement le bundle de ressources actuel, même si un ancien cache SwiftPM existe.

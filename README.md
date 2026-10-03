@@ -9,6 +9,12 @@
 - **Sans compte** : vos sauvegardes et rapports restent sur votre Mac. Seuls les catalogues de versions et les firmwares d’Apple transitent par le réseau.
 - **Honnête** : une donnée illisible reste indiquée comme telle, sans note d’authenticité inventée.
 
+## Télécharger
+
+[Télécharger iTelier pour Mac Apple Silicon (.dmg)](https://github.com/byalmaz/iTelier/releases/download/v0.2.0-beta.1/iTelier-macOS-arm64.dmg) · [Notes de la préversion](https://github.com/byalmaz/iTelier/releases/tag/v0.2.0-beta.1)
+
+Préversion 0.2.0 (build 39), pour macOS 14 ou plus récent. Ouvrir le DMG et faire glisser iTelier dans Applications. Cette distribution de développement utilise une signature ad hoc et n’est pas notariée.
+
 ## État du projet
 
 Version de développement 0.2.0 (build 39), macOS 14 ou plus récent. Les outils USB embarqués sont issus des paquets officiels Homebrew ciblés Sonoma.
@@ -26,7 +32,7 @@ Version de développement 0.2.0 (build 39), macOS 14 ou plus récent. Les outils
 - Sauvegardes locales datées, chiffrement optionnel, ajout de sauvegardes Finder et restauration confirmée.
 - Style UI réutilisable : [itelier-glass-ui](skills/itelier-glass-ui/SKILL.md).
 
-Les tests sur de vrais appareils restent nécessaires avant une première release publique, en particulier pour les changements de mode USB et les restaurations complètes. Un build réussi ne prouve pas qu’une restauration a été testée.
+Les tests sur de vrais appareils restent nécessaires avant une version stable, en particulier pour les changements de mode USB et les restaurations complètes. Un build réussi ne prouve pas qu’une restauration a été testée.
 
 Validation locale du 2 octobre 2026 : **122 tests du cœur réussis** et helper de restauration validé avec un moteur inerte. Le bundle release `arm64` du build 39, son ZIP et son DMG ont été vérifiés, dont la signature ad hoc stricte et la migration des données locales. Le choix du chiffrement reste sur OFF après migration. Les versions précédentes ont validé la lecture USB des informations et de l’aperçu personnel de l’écran verrouillé. Une restauration avec conservation entreprise par l’utilisateur a échoué malgré un code moteur 0 : l’app refuse désormais cette fausse réussite et exige une confirmation terminale sans erreur fatale. Ce correctif ne résout pas l’échec de signature du composant et aucune restauration complète réussie sur appareil physique n’est confirmée. Voir [la portée de cette validation](docs/testing.md).
 

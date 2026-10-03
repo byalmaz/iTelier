@@ -17,7 +17,7 @@ Préversion 0.2.0 (build 39), pour macOS 14 ou plus récent. Ouvrir le DMG et fa
 
 ## État du projet
 
-Version de développement 0.2.0 (build 39), macOS 14 ou plus récent. Les outils USB embarqués sont issus des paquets officiels Homebrew ciblés Sonoma.
+Version de développement 0.2.0 (build 40), macOS 14 ou plus récent. Les outils USB embarqués sont issus des paquets officiels Homebrew ciblés Sonoma.
 
 - Application native, avec mode de démonstration pour explorer l’interface sans appareil.
 - Outils de détection USB, de diagnostic et de restauration libimobiledevice/libirecovery/idevicerestore inclus dans l’app, avec leurs bibliothèques.
@@ -26,6 +26,7 @@ Version de développement 0.2.0 (build 39), macOS 14 ou plus récent. Les outils
 - Export JSON du rapport, avec identifiants masqués par défaut, et journal d’activité conservé pendant la session.
 - Dossier de téléchargement automatique et actions Télécharger / Restaurer distinctes.
 - Suivi persistant des interruptions, moteur indépendant de l’interface et rapport d’incident consultable, exportable ou partageable par macOS.
+- Restaurations simultanées : lancer un premier appareil, puis choisir le suivant dans Restaurer. Chaque cible conserve sa confirmation, son IPSW, son mode, sa progression et son journal. Une erreur impose une vérification de cet appareil et laisse les autres opérations continuer.
 - Tests automatisés du cœur sans iPhone ou iPad connecté.
 - Aperçu personnel de l’écran verrouillé lorsqu’il est disponible, dans une coque adaptée au modèle connecté. L’heure reçue dans l’aperçu peut être figée ; ce n’est pas un écran en direct.
 - Illustrations de repli pour les appareils et le mode de démonstration, avec provenance documentée dans [les assets visuels](docs/visual-assets.md).
@@ -34,7 +35,7 @@ Version de développement 0.2.0 (build 39), macOS 14 ou plus récent. Les outils
 
 Les tests sur de vrais appareils restent nécessaires avant une version stable, en particulier pour les changements de mode USB et les restaurations complètes. Un build réussi ne prouve pas qu’une restauration a été testée.
 
-Validation locale du 2 octobre 2026 : **122 tests du cœur réussis** et helper de restauration validé avec un moteur inerte. Le bundle release `arm64` du build 39, son ZIP et son DMG ont été vérifiés, dont la signature ad hoc stricte et la migration des données locales. Le choix du chiffrement reste sur OFF après migration. Les versions précédentes ont validé la lecture USB des informations et de l’aperçu personnel de l’écran verrouillé. Une restauration avec conservation entreprise par l’utilisateur a échoué malgré un code moteur 0 : l’app refuse désormais cette fausse réussite et exige une confirmation terminale sans erreur fatale. Ce correctif ne résout pas l’échec de signature du composant et aucune restauration complète réussie sur appareil physique n’est confirmée. Voir [la portée de cette validation](docs/testing.md).
+Validation locale du 4 octobre 2026 : **128 tests du cœur réussis**, restaurations simultanées vérifiées avec deux moteurs inertes et préparation d’un troisième appareil contrôlée dans une interface isolée. Le bundle release `arm64` du build 40 et son DMG ont été vérifiés, dont la signature ad hoc stricte et les permissions. La migration des données et le choix du chiffrement sur OFF ont été validés au build 39. Les versions précédentes ont validé la lecture USB des informations et de l’aperçu personnel de l’écran verrouillé. Une restauration avec conservation entreprise par l’utilisateur a échoué malgré un code moteur 0 : l’app refuse désormais cette fausse réussite et exige une confirmation terminale sans erreur fatale. Ce correctif ne résout pas l’échec de signature du composant et aucune restauration complète réussie sur appareil physique n’est confirmée. Voir [la portée de cette validation](docs/testing.md).
 
 ## Compiler et lancer
 

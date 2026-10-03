@@ -1,5 +1,15 @@
 # Tests du cœur
 
+## Build 40 — restaurations simultanées
+
+Chaque appareil conserve une confirmation, un firmware, un mode, un suivi et un journal indépendants. Une seconde restauration peut démarrer sans attendre la première ; une cible déjà active est bloquée. Les échecs restent à vérifier par appareil, même après relance, et ne bloquent pas une autre cible identifiée. Les sauvegardes restent exclues pendant l’écriture IPSW. L’app ne propose pas de pause du moteur.
+
+Validation du 4 octobre 2026 : **128 tests du cœur réussis**, dont six tests dédiés aux verrous, à la normalisation des ECID, aux identités/modes persistés, à l’inventaire de récupération et à l’absence de données privées dans les rapports. Le test du helper inerte fait réellement chevaucher deux processus avec des ECID et modes différents ; il vérifie leurs journaux isolés, le refus d’une seconde écriture sur la même cible et la poursuite de l’autre session lorsqu’un appareil échoue. Les contrôles de requête à usage unique, de SHA-256, de fausse réussite moteur et de survie à la fermeture/SIGKILL du processus parent restent validés.
+
+Un contrôle SwiftUI isolé, avec suivis et verrous temporaires et sans découverte USB, vérifie la reprise de deux sessions, la préparation/confirmation d’un troisième appareil, les choix immuables de chaque cible, les états du Dock, le maintien de l’opération restante après une fin et le blocage d’un seul appareil après échec. Les cartes sont rendues en français/anglais et en clair/sombre. Ces simulations ne confirment pas une restauration matérielle simultanée : aucune restauration réelle n’a été exécutée par l’agent.
+
+Bundle release arm64 build 40 compilé et signé ; contrôle de la marque réussi sur les sources et le bundle. Le DMG est monté en lecture seule : ses 93 fichiers/liens et leurs permissions sont identiques au bundle, sa signature stricte est valide et le raccourci Applications est correct. L’image est démontée après contrôle.
+
 ## Première préversion publiée — build 39
 
 La [préversion v0.2.0-beta.1](https://github.com/byalmaz/iTelier/releases/tag/v0.2.0-beta.1), publiée le 3 octobre 2026, contient le DMG arm64 du build 39 et son fichier SHA-256. Le tag cible le commit `91bd8c643f5ebe10971a52af04121dd8a7520041`, dont le workflow macOS a réussi. Les deux assets sont publics ; la taille et l’empreinte calculée par GitHub correspondent aux fichiers locaux. Le DMG a été monté en lecture seule : les 93 fichiers/liens et leurs permissions sont identiques au bundle signé, le raccourci Applications est correct et l’image a été démontée après contrôle.

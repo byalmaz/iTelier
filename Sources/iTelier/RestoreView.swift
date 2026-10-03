@@ -16,8 +16,15 @@ struct RestoreView: View {
                     }
                 }
             }
-            if model.isRestoring || model.restorationComplete || model.restorationFailed {
-                progress
+            RestoreSessionsView()
+            if model.selectedDeviceRestoring || model.hasUnidentifiedRestore {
+                Surface(padding: 20) {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Label(L("Cet appareil est en cours de restauration."), systemImage: "arrow.triangle.2.circlepath")
+                        Text(L("Choisissez un autre appareil connecté pour préparer sa restauration. Chaque appareil garde sa version et ses réglages."))
+                            .font(.system(size: 12)).foregroundStyle(Palette.secondary)
+                    }
+                }
             } else {
                 HStack(spacing: 0) {
                     step(1, model.isDownloadingFirmware && !model.isCheckingExistingFirmware ? L("Télécharger") : L("Choisir l’IPSW"), active: model.firmware == nil && !model.isInspecting)
@@ -81,7 +88,7 @@ struct RestoreView: View {
                     } else {
                         HStack(spacing: 10) {
                             Button(L("Choisir une version")) { model.openFirmwareBrowser() }
-                                .buttonStyle(PrimaryButtonStyle()).disabled(model.busy)
+                                .buttonStyle(PrimaryButtonStyle()).disabled(model.preparationBusy)
                             Button(model.firmware == nil ? L("Fichier local…") : L("Autre fichier…")) { model.chooseFirmware() }
                                 .buttonStyle(QuietButtonStyle()).disabled(!model.canInspect)
                         }
@@ -244,6 +251,6 @@ struct RestoreConfirmation: View {
             }
         }.padding(30).frame(width: 560).foregroundStyle(Palette.ink).background(Palette.canvas)
             
-            .interactiveDismissDisabled(model.isRestoring)
+            .interactiveDismissDisabled(false)
     }
 }

@@ -94,7 +94,7 @@ cat > "$staged_bundle/Contents/Info.plist" <<'PLIST'
   <key>CFBundleExecutable</key><string>iTelier</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>0.2.0</string>
-  <key>CFBundleVersion</key><string>39</string>
+  <key>CFBundleVersion</key><string>40</string>
   <key>CFBundleDevelopmentRegion</key><string>fr</string>
   <key>CFBundleLocalizations</key><array><string>fr</string><string>en</string></array>
   <key>LSMinimumSystemVersion</key><string>14.0</string>

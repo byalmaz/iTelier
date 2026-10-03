@@ -94,7 +94,7 @@ struct WorkspaceView: View {
                                             }.padding(10).frame(maxWidth: .infinity, alignment: .leading)
                                                 .background(device.id == model.selectedDeviceID ? Palette.accent.opacity(0.1) : .clear, in: RoundedRectangle(cornerRadius: 10))
                                                 .contentShape(Rectangle())
-                                        }.buttonStyle(.plain).disabled(model.isRestoring || model.isBackupBusy)
+                                        }.buttonStyle(.plain).disabled(model.isBackupBusy || model.isRefreshing)
                                     }
                                 }
                             }.frame(height: min(210, CGFloat(max(1, model.devices.count)) * 58))
@@ -233,7 +233,7 @@ struct WorkspaceView: View {
                         Image(systemName: "chevron.down").font(.system(size: 8, weight: .medium))
                     }.font(.system(size: 11)).foregroundStyle(Palette.secondary)
                         .padding(.horizontal, 13).padding(.vertical, 10).contentShape(Rectangle())
-                }.buttonStyle(.plain).disabled(model.isRestoring || model.isBackupBusy)
+                }.buttonStyle(.plain).disabled(model.isBackupBusy || model.isRefreshing)
             }
             Button { Task { await model.refresh() } } label: {
                 if model.isRefreshing { ProgressView().controlSize(.small).frame(width: 18, height: 18) }

@@ -9,7 +9,12 @@ extension AppModel {
         return downloadDirectoryPath == downloads ? L("Téléchargements/iTelier") : (downloadDirectoryPath as NSString).abbreviatingWithTildeInPath
     }
     var supportContext: SupportContext {
-        SupportContext(operation: isBackupBusy ? (backupOperation == .backup ? .backup : .backupRestore) : isRestoring ? .restoration : isDownloadingFirmware ? .firmwareDownload : .idle,
+        if let session = activeRestoreSessions.first, let target = session.snapshot.target {
+            return SupportContext(operation: .restoration, phase: session.phase, deviceModel: target.productType,
+                systemVersion: target.systemVersion, firmwareVersion: target.firmwareVersion,
+                firmwareBuild: target.firmwareBuild, restoreMode: target.mode)
+        }
+        return SupportContext(operation: isBackupBusy ? (backupOperation == .backup ? .backup : .backupRestore) : isRestoring ? .restoration : isDownloadingFirmware ? .firmwareDownload : .idle,
             phase: isBackupBusy ? backupPhase : isRestoring ? restorePhase : L("Consultation d’iTelier"), deviceModel: device?.productType,
             systemVersion: device?.osVersion, firmwareVersion: firmware?.version ?? downloadRelease?.version,
             firmwareBuild: firmware?.build ?? downloadRelease?.buildID, restoreMode: restoreMode)
@@ -29,7 +34,7 @@ extension AppModel {
             if recoveryRequired { page = .restore }
             AppDelegate.onCleanExit = { [weak self] in try? self?.safetyJournal?.closeNormally() }
         } catch { safetyStorageError = L("Le journal de sécurité est inaccessible. La restauration reste bloquée : \(error.localizedDescription)") }
-        if RestoreHost.isRunning { resumeRestoreObservation() }
+        resumeRestoreObservation()
     }
 
     @discardableResult func track(_ operation: TrackedOperation, phase: String) -> Bool {
@@ -38,7 +43,10 @@ extension AppModel {
         do { try journal.update(context); return true }
         catch { safetyStorageError = L("Impossible d’enregistrer l’état de l’opération. \(error.localizedDescription)"); return false }
     }
-    func finishTracking() { do { try safetyJournal?.completeOperation() } catch { safetyStorageError = error.localizedDescription } }
+    func finishTracking() {
+        if let active = activeRestoreSessions.first { _ = trackRestore(active); return }
+        do { try safetyJournal?.completeOperation() } catch { safetyStorageError = error.localizedDescription }
+    }
     func reportFailure(_ error: Error) {
         alert = error.localizedDescription
         var code = (error as NSError).code
@@ -105,7 +113,13 @@ extension AppModel {
         guard !BackupHost.isRunning else { resumeBackupObservation(); return }
         guard !RestoreHost.isRunning else { resumeRestoreObservation(); return }
         await refresh()
-        if device != nil { acknowledgeRecovery(); resetAcknowledgements() }
+        if device != nil {
+            for session in restoreSessions where session.needsReview && session.snapshot.target == nil {
+                do { try RestoreHost.acknowledgeReview(session.directory) } catch { reportFailure(error); return }
+                if let index = restoreSessions.firstIndex(where: { $0.id == session.id }) { restoreSessions[index].snapshot.reviewAcknowledged = true }
+            }
+            acknowledgeRecovery(); resetAcknowledgements(); updateRestoreSummary()
+        }
         else { alert = L("Aucun appareil identifié. Gardez le câble branché, vérifiez l’écran de l’appareil et réessayez. La restauration reste bloquée.") }
     }
 
@@ -114,35 +128,4 @@ extension AppModel {
         catch { safetyStorageError = error.localizedDescription }
     }
 
-    private func resumeRestoreObservation() {
-        guard !isRestoring else { return }
-        isRestoring = true; recoveryRequired = true; page = .restore
-        AppDelegate.restorationActive = true
-        restorePhase = L("Reprise du suivi de la restauration")
-        track(.restoration, phase: restorePhase)
-        Task {
-            var trackedID: String?
-            while RestoreHost.isRunning {
-                if let latest = RestoreHost.latest() {
-                    trackedID = latest.snapshot.sessionID
-                    restorePhase = latest.snapshot.phase; restoreProgress = latest.snapshot.progress; logs = latest.snapshot.log
-                    track(.restoration, phase: restorePhase)
-                }
-                try? await Task.sleep(nanoseconds: 750_000_000)
-            }
-            isRestoring = false; AppDelegate.restorationActive = false
-            if let latest = RestoreHost.latest(), latest.snapshot.sessionID == trackedID, latest.snapshot.finished {
-                restorationComplete = latest.snapshot.completion == .confirmed
-                restorationFailed = !restorationComplete
-                restorePhase = restorationComplete ? L("Installation du système terminée") : latest.snapshot.completion == .failed ? L("La restauration n’a pas abouti") : L("Résultat de la restauration à vérifier")
-                restoreProgress = restorationComplete ? 1 : nil; logs = latest.snapshot.log
-                if restorationComplete { acknowledgeRecovery() }
-            } else {
-                restorationFailed = true
-                restorePhase = L("Résultat de la restauration à vérifier")
-            }
-            if restorationFailed { reportFailure(DeviceServiceError.unsafeRestore(L("Une restauration s’est interrompue. Gardez l’appareil connecté et vérifiez son état avant une nouvelle tentative."))) }
-            finishTracking()
-        }
-    }
 }

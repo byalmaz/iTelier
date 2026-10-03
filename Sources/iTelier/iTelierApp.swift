@@ -44,7 +44,7 @@ struct iTelierApp: App {
                     .disabled(!model.canInspect)
                 Button(L("Choisir une version…")) { model.openFirmwareBrowser() }
                     .keyboardShortcut("o", modifiers: [.command, .shift])
-                    .disabled(model.busy || model.showSettings || model.showConfirmation)
+                    .disabled(model.preparationBusy || model.showSettings || model.showConfirmation)
                 Divider()
                 ForEach(Array(WorkspacePage.allCases.enumerated()), id: \.element.id) { index, page in
                     Button(page.title) { model.page = page }

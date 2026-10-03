@@ -14,7 +14,7 @@ final class DockMenuController: NSObject {
         } else {
             for device in model.devices {
                 let title = "\(device.name) · \(device.family.systemName) \(device.osVersion ?? "—")"
-                let item = add(title, to: menu, action: #selector(selectDevice(_:)), enabled: !model.isRestoring && !model.isBackupBusy)
+                let item = add(title, to: menu, action: #selector(selectDevice(_:)), enabled: !model.isBackupBusy && !model.isRefreshing)
                 item.representedObject = device.id
                 item.state = device.id == model.selectedDeviceID ? .on : .off
                 item.image = NSImage(systemSymbolName: device.symbolName, accessibilityDescription: nil)
@@ -29,10 +29,12 @@ final class DockMenuController: NSObject {
             menu.addItem(.separator())
         }
         if model.isRestoring {
-            let mode = model.activeRestoreMode ?? model.restoreMode
-            add(mode == .preserveData ? L("Conservation des données") : L("Effacement complet"), to: menu, enabled: false)
-            add(model.restorePhase, to: menu, enabled: false)
-            if let fraction = model.restoreProgress { add("\(Int(fraction * 100)) %", to: menu, enabled: false) }
+            for session in model.activeRestoreSessions {
+                add(session.snapshot.target?.name ?? L("Appareil à vérifier"), to: menu, enabled: false)
+                if let mode = session.snapshot.target?.mode { add(mode.title, to: menu, enabled: false) }
+                add(session.phase, to: menu, enabled: false)
+                if let fraction = session.snapshot.progress { add("\(Int(fraction * 100)) %", to: menu, enabled: false) }
+            }
             let pause = add(L("Pause indisponible pendant la restauration"), to: menu, enabled: false)
             pause.toolTip = L("L’écriture du firmware doit se poursuivre sans interruption.")
             menu.addItem(.separator())
@@ -64,7 +66,7 @@ final class DockMenuController: NSObject {
         model?.page = page; reveal()
     }
     @objc private func selectDevice(_ sender: NSMenuItem) {
-        guard let model, !model.isRestoring, !model.isBackupBusy, let id = sender.representedObject as? String else { return }
+        guard let model, !model.isBackupBusy, let id = sender.representedObject as? String else { return }
         model.selectDevice(id); reveal()
     }
     @objc private func toggleDownload() { model?.toggleDownloadPause() }

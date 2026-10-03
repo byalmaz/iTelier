@@ -11,6 +11,8 @@ public struct RestoreHostSnapshot: Codable, Sendable {
     /// Private local journal; excluded from support exports unless explicitly requested.
     public var log: [String]
     public var engineCompletion: RestoreCompletion? = nil
+    public var target: RestoreTarget? = nil
+    public var reviewAcknowledged: Bool? = nil
 
     /// Relit aussi les anciens journaux dont le code 0 pouvait masquer un échec.
     public var completion: RestoreCompletion {
@@ -27,6 +29,7 @@ public struct RestoreHostSnapshot: Codable, Sendable {
 private struct RestoreHostRequest: Codable {
     let arguments: [String]
     let firmwareSHA256: String
+    var target: RestoreTarget? = nil
 }
 
 /// The worker owns the restore process and its pipes. Closing/crashing the UI cannot
@@ -37,13 +40,27 @@ public enum RestoreHost {
             .appendingPathComponent("iTelier/Restores", isDirectory: true)
     }
 
-    static func launch(arguments: [String], firmwareSHA256: String, directory: URL) throws {
-        guard !isRunning else { throw DeviceServiceError.unsafeRestore(L("Une restauration est déjà en cours. iTelier doit d’abord retrouver son état.")) }
+    public static func prepare(target: RestoreTarget) throws -> URL {
+        let directory = root.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
+        var state = RestoreHostSnapshot(sessionID: directory.lastPathComponent, phase: L("Validation de l’appareil et du firmware"),
+                                        finished: false, updatedAt: Date(), log: [])
+        state.target = target
+        try write(state, to: directory.appendingPathComponent("state.json"))
+        return directory
+    }
+
+    static func launch(arguments: [String], firmwareSHA256: String, directory: URL, target: RestoreTarget? = nil) throws {
+        let validated = try validateArguments(arguments)
+        guard !isRestoring(ecid: validated.ecid), !BackupHost.isRunning else {
+            throw DeviceServiceError.unsafeRestore(L("Une opération est déjà en cours sur cet appareil."))
+        }
         let helper = Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/iTelierRestoreHost")
         guard FileManager.default.isExecutableFile(atPath: helper.path) else {
             throw DeviceServiceError.unsafeRestore(L("Le module de protection de la restauration est absent. Lancez le bundle iTelier complet."))
         }
-        try write(RestoreHostRequest(arguments: arguments, firmwareSHA256: firmwareSHA256), to: directory.appendingPathComponent("request.json"))
+        try target?.validate(ecid: validated.ecid, mode: validated.mode)
+        try write(RestoreHostRequest(arguments: arguments, firmwareSHA256: firmwareSHA256, target: target), to: directory.appendingPathComponent("request.json"))
         try detach(executable: helper, directory: directory)
     }
 
@@ -64,18 +81,61 @@ public enum RestoreHost {
 
     public static var isRunning: Bool { isLocked(root: root) }
 
+    static func deviceLockRoot(ecid: String, root: URL) throws -> URL {
+        guard let normalized = DeviceParser.normalizedECID(ecid) else {
+            throw DeviceServiceError.unsafeRestore(L("Restauration bloquée : l’ECID de l’appareil ne peut pas être vérifié."))
+        }
+        return root.appendingPathComponent("Devices", isDirectory: true).appendingPathComponent(normalized, isDirectory: true)
+    }
+
+    public static func isRestoring(ecid: String) -> Bool {
+        guard let directory = try? deviceLockRoot(ecid: ecid, root: root) else { return true }
+        guard FileManager.default.fileExists(atPath: directory.appendingPathComponent("engine.lock").path) else { return false }
+        return isLocked(root: directory)
+    }
+
+    public static func isSessionRunning(_ directory: URL) -> Bool {
+        guard FileManager.default.fileExists(atPath: directory.appendingPathComponent("engine.lock").path) else { return false }
+        return isLocked(root: directory)
+    }
+
+    public static var activeECIDs: Set<String> {
+        Set(sessions().compactMap { entry in
+            guard isSessionRunning(entry.directory), let target = entry.snapshot.target else { return nil }
+            return target.ecid
+        })
+    }
+
+    public static func sessions() -> [(directory: URL, snapshot: RestoreHostSnapshot)] { sessions(root: root) }
+
+    static func sessions(root: URL) -> [(directory: URL, snapshot: RestoreHostSnapshot)] {
+        let entries = (try? FileManager.default.contentsOfDirectory(at: root, includingPropertiesForKeys: nil)) ?? []
+        return entries.compactMap { directory -> (URL, RestoreHostSnapshot)? in
+            guard UUID(uuidString: directory.lastPathComponent) != nil, let snapshot = read(directory) else { return nil }
+            return (directory, snapshot)
+        }.sorted { $0.1.updatedAt > $1.1.updatedAt }
+    }
+
+    public static func recordPreparationFailure(_ directory: URL) throws {
+        guard !isSessionRunning(directory), var state = read(directory), !state.finished else { return }
+        state.finished = true; state.exitCode = 1; state.engineCompletion = .failed
+        state.phase = L("La restauration n’a pas abouti"); state.progress = nil; state.updatedAt = Date()
+        try write(state, to: directory.appendingPathComponent("state.json"))
+    }
+
+    public static func acknowledgeReview(_ directory: URL) throws {
+        guard !isSessionRunning(directory), var state = read(directory) else { return }
+        state.reviewAcknowledged = true
+        try write(state, to: directory.appendingPathComponent("state.json"))
+    }
+
     static func isLocked(root: URL) -> Bool {
         guard let lock = try? HostLock(root: root, acquire: false) else { return true }
         return lock.wasBusy
     }
 
     public static func latest() -> (directory: URL, snapshot: RestoreHostSnapshot)? {
-        let entries = (try? FileManager.default.contentsOfDirectory(at: root, includingPropertiesForKeys: nil)) ?? []
-        return entries.compactMap { directory -> (URL, RestoreHostSnapshot)? in
-            guard UUID(uuidString: directory.lastPathComponent) != nil,
-                  let snapshot = read(directory) else { return nil }
-            return (directory, snapshot)
-        }.max { $0.1.updatedAt < $1.1.updatedAt }
+        sessions().first
     }
 
     public static func read(_ directory: URL) -> RestoreHostSnapshot? {
@@ -101,7 +161,7 @@ public enum RestoreHost {
                     return CommandResult(stdout: Data(state.log.joined(separator: "\n").utf8), stderr: Data(), exitCode: exitCode)
                 }
             }
-            if !isRunning, Date().timeIntervalSince(started) > 15 {
+            if !isSessionRunning(directory), Date().timeIntervalSince(started) > 15 {
                 throw DeviceServiceError.unsafeRestore(L("Le moteur de restauration s’est arrêté sans résultat confirmé. Gardez l’appareil connecté et consultez le rapport d’incident."))
             }
             // Cancellation stops observing, never the independent worker.
@@ -128,9 +188,8 @@ public enum RestoreHost {
         guard directory.deletingLastPathComponent().resolvingSymlinksInPath() == root.resolvingSymlinksInPath(),
               UUID(uuidString: directory.lastPathComponent) != nil else { return 2 }
         do {
-            let lock = try HostLock(root: root, acquire: true)
-            let operationLock = try HostLock(root: root == Self.root ? BackupHost.sharedLockRoot : root.appendingPathComponent("operation-lock"), acquire: true)
-            defer { withExtendedLifetime((lock, operationLock)) {} }
+            let sessionLock = try HostLock(root: directory, acquire: true)
+            defer { withExtendedLifetime(sessionLock) {} }
             let activity = ProcessInfo.processInfo.beginActivity(options: [.userInitiated, .idleSystemSleepDisabled],
                 reason: L("Restauration d’un iPhone ou d’un iPad en cours"))
             defer { ProcessInfo.processInfo.endActivity(activity) }
@@ -144,6 +203,15 @@ public enum RestoreHost {
                 let data = try readBounded(directory.appendingPathComponent("request.json"), limit: 16_384)
                 let request = try JSONDecoder().decode(RestoreHostRequest.self, from: data)
                 let validated = try validateArguments(request.arguments)
+                try request.target?.validate(ecid: validated.ecid, mode: validated.mode)
+                journal.setTarget(request.target)
+                // Verrous partagés : plusieurs restaurations, mais aucune sauvegarde,
+                // migration ou ancienne version utilisant un verrou exclusif.
+                let lock = try HostLock(root: root, acquire: true, shared: true)
+                let operationLock = try HostLock(root: root == Self.root ? BackupHost.sharedLockRoot : root.appendingPathComponent("operation-lock"), acquire: true, shared: true)
+                let deviceLock = try HostLock(root: deviceLockRoot(ecid: validated.ecid, root: root), acquire: true)
+                defer { withExtendedLifetime((lock, operationLock, deviceLock)) {} }
+                _ = umask(0o077)
                 guard try await FirmwareInspector.sha256(validated.url) == request.firmwareSHA256 else {
                     throw DeviceServiceError.unsafeRestore(L("Le fichier IPSW a changé avant le démarrage du moteur."))
                 }
@@ -158,7 +226,7 @@ public enum RestoreHost {
         } catch { return 4 }
     }
 
-    static func validateArguments(_ arguments: [String]) throws -> (url: URL, mode: RestoreMode) {
+    static func validateArguments(_ arguments: [String]) throws -> (url: URL, mode: RestoreMode, ecid: String) {
         let preserves = arguments.first == "--variant"
         let offset = preserves ? 2 : 1
         guard arguments.count == offset + 5, arguments[0] == (preserves ? "--variant" : "-e"),
@@ -170,7 +238,7 @@ public enum RestoreHost {
         let canonical = try RestoreValidator.arguments(ecid: arguments[offset + 3], url: url, mode: mode,
                                                        upgradeVariant: preserves ? arguments[1] : nil)
         guard canonical == arguments else { throw DeviceServiceError.unsafeRestore(L("Options non canoniques.")) }
-        return (url, mode)
+        return (url, mode, arguments[offset + 3])
     }
 
     static func write<T: Encodable>(_ value: T, to url: URL) throws {
@@ -189,11 +257,11 @@ public enum RestoreHost {
 final class HostLock {
     private var fd: Int32 = -1
     let wasBusy: Bool
-    init(root: URL, acquire: Bool) throws {
+    init(root: URL, acquire: Bool, shared: Bool = false) throws {
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
-        fd = Darwin.open(root.appendingPathComponent("engine.lock").path, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR)
+        fd = Darwin.open(root.appendingPathComponent("engine.lock").path, O_CREAT | O_RDWR | O_CLOEXEC | O_NOFOLLOW, S_IRUSR | S_IWUSR)
         guard fd >= 0 else { throw DeviceServiceError.unsafeRestore(L("Le verrou de restauration est inaccessible.")) }
-        wasBusy = flock(fd, LOCK_EX | LOCK_NB) != 0
+        wasBusy = flock(fd, (shared ? LOCK_SH : LOCK_EX) | LOCK_NB) != 0
         if acquire && wasBusy { Darwin.close(fd); fd = -1; throw DeviceServiceError.unsafeRestore(L("Une restauration est déjà active.")) }
     }
     deinit { if fd >= 0 { if !wasBusy { flock(fd, LOCK_UN) }; Darwin.close(fd) } }
@@ -209,6 +277,7 @@ private final class HostJournal: @unchecked Sendable {
         self.directory = directory
         state = RestoreHostSnapshot(sessionID: directory.lastPathComponent, phase: L("Vérification du firmware avant écriture"),
                                     finished: false, updatedAt: Date(), log: [])
+        state.target = RestoreHost.read(directory)?.target
     }
     func append(_ line: String) {
         lock.lock(); defer { lock.unlock() }
@@ -221,6 +290,11 @@ private final class HostJournal: @unchecked Sendable {
             if state.log.count > 150 { state.log.removeFirst(state.log.count - 150) }
         }
         if previousPhase != state.phase || Date().timeIntervalSince(lastSave) > 0.4 { try? saveLocked() }
+    }
+    func setTarget(_ target: RestoreTarget?) {
+        lock.lock(); defer { lock.unlock() }
+        state.target = target
+        try? saveLocked()
     }
     func save() throws { lock.lock(); defer { lock.unlock() }; try saveLocked() }
     func finish(code: Int32) throws -> Int32 {

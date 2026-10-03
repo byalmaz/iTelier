@@ -39,7 +39,7 @@ struct FirmwareBrowserView: View {
     }
 
     private var canDownload: Bool {
-        selectedRelease != nil && !model.busy
+        selectedRelease != nil && !model.preparationBusy
             && !model.isLoadingCatalog && !model.isDownloadingFirmware
     }
 
@@ -92,7 +92,7 @@ struct FirmwareBrowserView: View {
                 .buttonStyle(QuietButtonStyle())
                 .accessibilityLabel(L("Actualiser le catalogue"))
                 .help(L("Actualiser les versions et leur état de signature"))
-                .disabled(model.isLoadingCatalog || model.busy || model.isDownloadingFirmware)
+                .disabled(model.isLoadingCatalog || model.preparationBusy || model.isDownloadingFirmware)
             Button { model.showFirmwareBrowser = false } label: {
                 CloseGlyph()
             }
@@ -163,7 +163,7 @@ struct FirmwareBrowserView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .disabled(model.busy || model.isDownloadingFirmware)
+        .disabled(model.preparationBusy || model.isDownloadingFirmware)
         .accessibilityLabel("\(device.name), \(device.identifier)")
         .accessibilityAddTraits(selected ? .isSelected : [])
     }
@@ -263,7 +263,7 @@ struct FirmwareBrowserView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .disabled(model.isLoadingCatalog || model.busy || model.isDownloadingFirmware)
+        .disabled(model.isLoadingCatalog || model.preparationBusy || model.isDownloadingFirmware)
         .accessibilityLabel("\(DeviceFamily(identifier: release.identifier).systemName) \(release.displayVersion), build \(release.buildID), \(release.signed ? L("signée") : L("non signée")), \(sizeLabel(release))")
         .accessibilityAddTraits(selected ? .isSelected : [])
     }
@@ -292,7 +292,7 @@ struct FirmwareBrowserView: View {
                 else if let release = selectedRelease { model.startFirmwareDownload(release, prepareRestore: true) }
             } label: { Label(selectedIsVisionPro ? L("Avec Apple Configurator") : L("Restaurer…"), systemImage: "arrow.triangle.2.circlepath") }
                 .buttonStyle(PrimaryButtonStyle())
-                .disabled(selectedIsVisionPro ? model.busy : (!canDownload || selectedRelease.map { !model.canPrepareRestore($0) } != false))
+                .disabled(selectedIsVisionPro ? model.preparationBusy : (!canDownload || selectedRelease.map { !model.canPrepareRestore($0) } != false))
                 .help(L("Nécessite une version signée et l’appareil correspondant connecté. Une confirmation sera demandée avant toute écriture."))
         }
     }

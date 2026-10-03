@@ -8,26 +8,44 @@ public struct DeviceService: Sendable {
         ToolResolver.names.map { ToolStatus(id: $0, name: $0, path: ToolResolver.resolve($0)) }
     }
 
-    public func discover() async throws -> [DeviceSnapshot] {
+    public func discover(excludingRestoreECIDs: Set<String> = []) async throws -> [DeviceSnapshot] {
         var devices: [DeviceSnapshot] = []
         var readFailure: Error?
+        let activeIDs = Set(RestoreHost.sessions().compactMap { entry -> String? in
+            guard let target = entry.snapshot.target, excludingRestoreECIDs.contains(target.ecid) else { return nil }
+            return target.deviceID
+        })
         if let tool = ToolResolver.resolve("idevice_id") {
             let listing = try await command(tool, ["-l"])
             let identifiers = String(decoding: listing.stdout, as: UTF8.self).split(whereSeparator: \.isNewline).map(String.init)
             for id in identifiers {
                 try Task.checkCancellation()
-                do { devices.append(try await readNormalDevice(id: id)) }
+                do {
+                    // Une cible active n’est jamais interrogée pour le Check ou le fond.
+                    if activeIDs.contains(id) { continue }
+                    let device = try await readNormalDevice(id: id)
+                    if !excludingRestoreECIDs.contains(device.ecid ?? "") { devices.append(device) }
+                }
                 catch is CancellationError { throw CancellationError() }
                 catch { readFailure = error }
             }
         }
-        // Recovery/DFU is queried only when there is no normal-mode device. The tool exposes one device.
-        if devices.isEmpty, let tool = ToolResolver.resolve("irecovery") {
-            do {
-                let result = try await command(tool, ["-q"], timeout: 10)
-                devices.append(try DeviceParser.recoveryDevice(String(decoding: result.stdout, as: UTF8.self)))
-            } catch is CancellationError { throw CancellationError() }
-            catch { /* No recovery device is a normal empty state; preserve pairing failures below. */ }
+        if let tool = ToolResolver.resolve("irecovery") {
+            let inventory = RecoveryUSBInventory.ecids()
+            let known = Set(devices.compactMap(\.ecid)).union(excludingRestoreECIDs)
+            var targets = inventory.subtracting(known).sorted().map { ["-i", $0, "-q"] }
+            // Repli ancien : uniquement sans restauration active ni cible connue.
+            if targets.isEmpty, inventory.isEmpty, devices.isEmpty, excludingRestoreECIDs.isEmpty, !RestoreHost.isRunning { targets = [["-q"]] }
+            for arguments in targets {
+                do {
+                    let result = try await command(tool, arguments, timeout: 10)
+                    let snapshot = try DeviceParser.recoveryDevice(String(decoding: result.stdout, as: UTF8.self))
+                    guard !known.contains(snapshot.ecid ?? ""),
+                          arguments.count == 1 || snapshot.ecid == arguments[1] else { continue }
+                    devices.append(snapshot)
+                } catch is CancellationError { throw CancellationError() }
+                catch { /* Un appareil peut changer de mode entre l’inventaire et la lecture. */ }
+            }
         }
         if devices.isEmpty, let readFailure { throw readFailure }
         if ToolResolver.resolve("idevice_id") == nil && ToolResolver.resolve("irecovery") == nil {
@@ -151,6 +169,7 @@ public struct DeviceService: Sendable {
     }
 
     public func restore(device: DeviceSnapshot, firmware: FirmwareInfo, approval: RestoreApproval,
+                        sessionDirectory: URL? = nil,
                         onEvent: @escaping @Sendable (RestoreEvent) -> Void) async throws {
         let ecid = try RestoreValidator.validateApproval(device: device, firmware: firmware, approval: approval)
         guard let restoreTool = ToolResolver.resolve("idevicerestore") else {
@@ -167,7 +186,7 @@ public struct DeviceService: Sendable {
         }
         onEvent(.phase(L("Vérification de l’appareil connecté")))
         var candidates: [DeviceSnapshot]
-        do { candidates = try await discover() }
+        do { candidates = try await discover(excludingRestoreECIDs: RestoreHost.activeECIDs.subtracting([ecid])) }
         catch is CancellationError { throw CancellationError() }
         catch { candidates = [] }
         // Normal and Recovery devices can coexist, and a selected device may have changed modes.
@@ -199,7 +218,11 @@ public struct DeviceService: Sendable {
         }
         let arguments = try RestoreValidator.arguments(ecid: ecid, url: verified.url, mode: approval.mode,
                                                        upgradeVariant: verified.upgradeVariant(for: connected))
-        let workDirectory = try restoreWorkingDirectory()
+        let workDirectory = try sessionDirectory ?? restoreWorkingDirectory()
+        guard workDirectory.deletingLastPathComponent().resolvingSymlinksInPath() == RestoreHost.root.resolvingSymlinksInPath(),
+              UUID(uuidString: workDirectory.lastPathComponent) != nil else {
+            throw DeviceServiceError.unsafeRestore(L("Le suivi ne correspond pas à l’appareil confirmé."))
+        }
         onEvent(.phase(L("Dernière vérification SHA-256")))
         guard try await FirmwareInspector.sha256(verified.url) == approval.firmwareSHA256,
               try FileFingerprint.read(verified.url) == fingerprint else {
@@ -208,7 +231,8 @@ public struct DeviceService: Sendable {
         try Task.checkCancellation()
         onEvent(.phase(approval.mode == .erase ? L("Démarrage de la restauration avec effacement") : L("Réinstallation avec conservation des données")))
         onEvent(.log(L("L’outil de restauration vérifie la signature Apple. La disponibilité d’un fichier IPSW ne garantit pas qu’Apple accepte encore cette version.")))
-        try RestoreHost.launch(arguments: arguments, firmwareSHA256: approval.firmwareSHA256, directory: workDirectory)
+        try RestoreHost.launch(arguments: arguments, firmwareSHA256: approval.firmwareSHA256, directory: workDirectory,
+                               target: RestoreTarget(device: device, firmware: verified, mode: approval.mode))
         let result = try await RestoreHost.wait(directory: workDirectory, onEvent: onEvent)
         guard result.exitCode == 0 else {
             let detail = String(decoding: result.stderr.isEmpty ? result.stdout : result.stderr, as: UTF8.self)

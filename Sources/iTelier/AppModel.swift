@@ -81,6 +81,9 @@ final class AppModel: ObservableObject {
     @Published var isChecking = false
     @Published var isInspecting = false
     @Published var isRestoring = false
+    @Published var restoreSessions: [RestoreSession] = []
+    var restoreObservation: Task<Void, Never>?
+    var restoreExecutions = Set<String>()
     @Published var activeRestoreMode: RestoreMode?
     private let dockProgress = DockProgressController()
     private var dockObservation: AnyCancellable?
@@ -145,7 +148,7 @@ final class AppModel: ObservableObject {
         ?? FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask)[0].appendingPathComponent("iTelier").path
     var safetyJournal: SafetyJournal?
     private var catalogRestoreTarget: String?
-    private let service = DeviceService()
+    let service = DeviceService()
     private let firmwareCatalog = FirmwareCatalog()
     private let firmwareDownloader = FirmwareDownloader()
     private var refreshGeneration = 0
@@ -171,7 +174,7 @@ final class AppModel: ObservableObject {
     private func updateDockProgress() {
         let active = isRestoring || isDownloadingFirmware || isBackupBusy
         let progress = isRestoring ? restoreProgress : isDownloadingFirmware ? (isInspecting ? nil : downloadFraction) : backupProgress
-        dockProgress.update(active: active, fraction: progress, paused: isDownloadingFirmware && isDownloadPaused)
+        dockProgress.update(active: active, fraction: progress, paused: !isRestoring && !isBackupBusy && isDownloadingFirmware && isDownloadPaused)
     }
 
     var device: DeviceSnapshot? { devices.first { $0.id == selectedDeviceID } }
@@ -189,13 +192,13 @@ final class AppModel: ObservableObject {
     var busy: Bool { isReadingDeviceInformation || isReadingBackupEncryption || isBackupBusy || isRestoring || isInspecting || isChecking || isDownloadingFirmware || isChoosingDownloadFolder || isManagingReference }
     // Choosing a mode only changes local preparation. Downloading or inspecting an
     // IPSW must not lock it; the selected mode is validated again before execution.
-    var canChangeRestoreMode: Bool { !isRestoring && !isBackupBusy }
+    var canChangeRestoreMode: Bool { !selectedDeviceRestoring && !isBackupBusy }
     // Downloads and local IPSW analysis do not use USB. Keep discovering devices during them.
-    var canRefreshDevices: Bool { !isReadingDeviceInformation && !isDemo && !isReadingBackupEncryption && !isBackupBusy && !isRestoring && !isChecking && !isRefreshing && !isManagingReference }
-    var canInspect: Bool { !busy && !isRefreshing && !isDemo }
+    var canRefreshDevices: Bool { !isReadingDeviceInformation && !isDemo && !isReadingBackupEncryption && !isBackupBusy && !hasUnidentifiedRestore && !isChecking && !isRefreshing && !isManagingReference }
+    var canInspect: Bool { !preparationBusy && !isRefreshing && !isDemo }
     var canRestore: Bool {
         guard let device, let firmware else { return false }
-        return !device.isVisionPro && !isDemo && !busy && !isRefreshing && !recoveryRequired && safetyStorageError == nil
+        return !device.isVisionPro && !isDemo && !preparationBusy && !selectedDeviceRestoring && !selectedDeviceNeedsReview && !hasUnidentifiedRestore && !isRefreshing && !recoveryRequired && safetyStorageError == nil
             && firmware.supports(device, mode: restoreMode)
             && (restoreMode == .erase || firmware.preservationIssue(for: device) == nil)
             && firmwareSourceRelease?.signed != false
@@ -215,12 +218,15 @@ final class AppModel: ObservableObject {
         confirmationMode = restoreMode
         operationAcknowledged = false
         showRestorePreparation = false
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { self.showConfirmation = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            guard self.canConfirmRestore else { return }
+            self.showConfirmation = true
+        }
     }
     func installed(_ name: String) -> Bool { tools.first { $0.name == name }?.isInstalled == true }
 
     func selectDevice(_ id: String?) {
-        guard !isRestoring, !isBackupBusy else { return }
+        guard !isBackupBusy, !isRefreshing, !isChecking, !isReadingDeviceInformation, !isReadingBackupEncryption, !showConfirmation else { return }
         selectedDeviceID = id
         report = nil
         checkReference = nil
@@ -248,8 +254,12 @@ final class AppModel: ObservableObject {
         defer { isRefreshing = false }
         tools = DeviceService.toolStatus()
         do {
-            let found = try await service.discover()
+            let activeECIDs = Set(restoreSessions.filter(\.isActive).compactMap { $0.snapshot.target?.ecid })
+            var found = try await service.discover(excludingRestoreECIDs: activeECIDs)
             guard generation == refreshGeneration, !isDemo else { return }
+            found += devices.filter { candidate in
+                activeECIDs.contains(candidate.ecid ?? "") && !found.contains(where: { $0.id == candidate.id })
+            }
             let previous = selectedDeviceID
             devices = found
             if showConfirmation, let confirmationDevice,
@@ -274,7 +284,7 @@ final class AppModel: ObservableObject {
             deviceWallpapers = deviceWallpapers.filter { connectedIDs.contains($0.key) }
             wallpaperAttempts = wallpaperAttempts.filter { connectedIDs.contains($0.key) }
             deviceClockOffsets = deviceClockOffsets.filter { connectedIDs.contains($0.key) }
-            if let target = device, target.mode == .normal,
+            if let target = device, target.mode == .normal, !activeECIDs.contains(target.ecid ?? ""),
                !automatic || (wallpaperAttempts[target.id].map({ Date().timeIntervalSince($0) > 60 }) ?? true) {
                 wallpaperAttempts[target.id] = Date()
                 let data = try? await service.wallpaper(target)
@@ -366,7 +376,7 @@ final class AppModel: ObservableObject {
     }
 
     func openFirmwareBrowser() {
-        guard !busy, !showSettings, !showConfirmation else { return }
+        guard !preparationBusy, !showSettings, !showConfirmation else { return }
         page = .restore
         showFirmwareBrowser = true
         if isLoadingCatalog { return }
@@ -449,12 +459,12 @@ final class AppModel: ObservableObject {
     }
 
     func canPrepareRestore(_ release: FirmwareRelease) -> Bool {
-        DeviceFamily(identifier: release.identifier) != .visionPro && !isDemo && !busy && !isRefreshing && !recoveryRequired && safetyStorageError == nil && release.signed
+        DeviceFamily(identifier: release.identifier) != .visionPro && !isDemo && !preparationBusy && !selectedDeviceRestoring && !selectedDeviceNeedsReview && !hasUnidentifiedRestore && !isRefreshing && !recoveryRequired && safetyStorageError == nil && release.signed
             && device?.productType == release.identifier && device?.ecid != nil
     }
 
     func startFirmwareDownload(_ release: FirmwareRelease, prepareRestore: Bool = false) {
-        guard !busy, !isLoadingCatalog, release.identifier == catalogDeviceIdentifier,
+        guard !preparationBusy, !isLoadingCatalog, release.identifier == catalogDeviceIdentifier,
               catalogReleases.contains(release), !prepareRestore || canPrepareRestore(release) else { return }
         do {
             let directory = URL(fileURLWithPath: downloadDirectoryPath, isDirectory: true)
@@ -599,65 +609,7 @@ final class AppModel: ObservableObject {
 
     func beginRestore() async {
         guard canConfirmRestore, operationAcknowledged, let device = confirmationDevice, let firmware = confirmationFirmware else { return }
-        guard track(.restoration, phase: L("Préparation de la restauration")) else { return }
-        showConfirmation = false
-        activeRestoreMode = restoreMode
-        isRestoring = true
-        AppDelegate.restorationActive = true
-        NSApp.windows.forEach { $0.standardWindowButton(.closeButton)?.isEnabled = false }
-        restoreProgress = nil
-        restorePhase = L("Validation de l’appareil et du firmware")
-        logs = []
-        restorationComplete = false
-        restorationFailed = false
-        let approval = RestoreApproval(deviceID: device.id, firmwareSHA256: firmware.sha256,
-            acknowledgedDataLoss: restoreMode == .erase, mode: restoreMode,
-            acknowledgedPreservationRisk: restoreMode == .preserveData)
-        addActivity(L("Restauration lancée"), "\(restoreMode.title) · \(device.productType) · iOS/iPadOS \(firmware.version).", symbol: "arrow.triangle.2.circlepath")
-        defer {
-            isRestoring = false
-            AppDelegate.restorationActive = false
-            NSApp.windows.forEach { $0.standardWindowButton(.closeButton)?.isEnabled = true }
-            resetAcknowledgementsAfterRestore()
-            finishTracking()
-        }
-        do {
-            try await service.restore(device: device, firmware: firmware, approval: approval) { [weak self] event in
-                Task { @MainActor [weak self] in
-                    guard let self else { return }
-                    switch event {
-                    case .log(let line):
-                        self.logs.append(line)
-                        if self.logs.count > 4000 { self.logs.removeFirst(self.logs.count - 4000) }
-                    case .phase(let phase): if self.isRestoring {
-                        self.restorePhase = phase
-                        self.track(.restoration, phase: phase)
-                    }
-                    case .progress(let progress): if self.isRestoring { self.restoreProgress = progress }
-                    case .finished: break
-                    }
-                }
-            }
-            restorationComplete = true
-            acknowledgeRecovery()
-            restorePhase = L("Installation du système terminée")
-            restoreProgress = 1
-            report = nil
-            addActivity(L("Installation du système terminée"), L("La fin de l’installation est confirmée. L’appareil peut encore terminer son démarrage."), symbol: "checkmark.circle")
-        } catch {
-            restorationFailed = true
-            recoveryRequired = true
-            restorePhase = L("La restauration n’a pas abouti")
-            restoreProgress = nil
-            reportFailure(error)
-            logs.append(error.localizedDescription)
-            addActivity(L("Échec de restauration"), error.localizedDescription, symbol: "exclamationmark.triangle")
-        }
-    }
-    private func resetAcknowledgementsAfterRestore() {
-        backupAcknowledged = false
-        appleIDAcknowledged = false
-        operationAcknowledged = false
+        await startRestore(device: device, firmware: firmware, mode: restoreMode)
     }
 
     func toggleDemo() {
@@ -742,6 +694,11 @@ final class AppModel: ObservableObject {
             let identifiers = [snapshot.id, snapshot.serialNumber, snapshot.ecid, snapshot.name]
                 .compactMap { $0 }.filter { !$0.isEmpty && $0.count >= 4 }
             for identifier in identifiers { result = result.replacingOccurrences(of: identifier, with: L("[masqué]")) }
+        }
+        for target in restoreSessions.compactMap({ $0.snapshot.target }) {
+            for identifier in [target.deviceID, target.ecid, target.name].compactMap({ $0 }) where identifier.count >= 4 {
+                result = result.replacingOccurrences(of: identifier, with: L("[masqué]"))
+            }
         }
         for item in report?.items ?? [] where item.sensitive {
             if let value = item.actual, value.count >= 4 { result = result.replacingOccurrences(of: value, with: L("[masqué]")) }

@@ -11,9 +11,9 @@
 
 ## Télécharger
 
-[Télécharger iTelier pour Mac Apple Silicon (.dmg)](https://github.com/byalmaz/iTelier/releases/download/v0.2.0-beta.1/iTelier-macOS-arm64.dmg) · [Notes de la préversion](https://github.com/byalmaz/iTelier/releases/tag/v0.2.0-beta.1)
+[Télécharger iTelier pour Mac Apple Silicon (.dmg)](https://github.com/byalmaz/iTelier/releases/download/v0.2.0-beta.2/iTelier-macOS-arm64.dmg) · [Notes de la préversion](https://github.com/byalmaz/iTelier/releases/tag/v0.2.0-beta.2)
 
-Préversion 0.2.0 (build 39), pour macOS 14 ou plus récent. Ouvrir le DMG et faire glisser iTelier dans Applications. Cette distribution de développement utilise une signature ad hoc et n’est pas notariée.
+Préversion 0.2.0 (build 40), pour macOS 14 ou plus récent. Ouvrir le DMG et faire glisser iTelier dans Applications. Cette distribution de développement utilise une signature ad hoc et n’est pas notariée.
 
 ## État du projet
 

@@ -8,7 +8,9 @@ Validation du 4 octobre 2026 : **128 tests du cœur réussis**, dont six tests d
 
 Un contrôle SwiftUI isolé, avec suivis et verrous temporaires et sans découverte USB, vérifie la reprise de deux sessions, la préparation/confirmation d’un troisième appareil, les choix immuables de chaque cible, les états du Dock, le maintien de l’opération restante après une fin et le blocage d’un seul appareil après échec. Les cartes sont rendues en français/anglais et en clair/sombre. Ces simulations ne confirment pas une restauration matérielle simultanée : aucune restauration réelle n’a été exécutée par l’agent.
 
-Bundle release arm64 build 40 compilé et signé ; contrôle de la marque réussi sur les sources et le bundle. Le DMG est monté en lecture seule : ses 93 fichiers/liens et leurs permissions sont identiques au bundle, sa signature stricte est valide et le raccourci Applications est correct. L’image est démontée après contrôle.
+Bundle release arm64 build 40 compilé et signé ; contrôle de la marque réussi sur les sources et le bundle. Le DMG est monté en lecture seule : ses 93 fichiers/liens et leurs permissions sont identiques au bundle, sa signature stricte est valide et le raccourci Applications est correct. L’image est démontée après contrôle. Le ZIP passe son contrôle CRC et la même comparaison de contenu et de permissions.
+
+La [préversion v0.2.0-beta.2](https://github.com/byalmaz/iTelier/releases/tag/v0.2.0-beta.2) distribue le DMG et son fichier SHA-256. Le tag cible `d54d21b7768b210f5b6268a0ee5c1174a21d9db5` ; le [workflow macOS 37158208284](https://github.com/byalmaz/iTelier/actions/runs/37158208284) a réussi les tests, la fabrication du bundle, du ZIP et du DMG, puis leur dépôt en artifact. Les assets de la Release sont publics ; tailles et empreintes serveur/local identiques, téléchargement anonyme HTTP 200 et checksum téléchargé contrôlés.
 
 ## Première préversion publiée — build 39
 

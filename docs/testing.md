@@ -1,5 +1,13 @@
 # Tests du cœur
 
+## Préversion publiée — build 43
+
+La [préversion v0.2.0-beta.3](https://github.com/byalmaz/iTelier/releases/tag/v0.2.0-beta.3), publiée le 8 octobre 2026, distribue le DMG arm64 du build 43 et son fichier SHA-256. Le tag cible `a429df4075b150bd33b2772e28955f16adf4f1a8`. Le [workflow macOS 37805285929](https://github.com/byalmaz/iTelier/actions/runs/37805285929) a réussi : 153 tests XCTest sans échec, helper inerte, six tests d’intégrité des dépendances, bundle release, vérification de la marque et création du ZIP et du DMG déposés en artifact.
+
+Le DMG publié fait **97 497 767 octets**, avec l’empreinte `1dcc94afe4293169ed6537808acebda6ecaebdd9f3a17443ca72a3f5793c3c0f`, identique à celle calculée par GitHub. Son téléchargement public sans authentification et celui de `SHA256SUMS.txt` renvoient HTTP 200 ; la taille et l’empreinte du fichier téléchargé sont vérifiées. Monté en lecture seule, le DMG contient les 93 fichiers et 37 dossiers du bundle avec contenus et permissions identiques, la version 43 et une signature stricte valide. Le lien Applications est correct et l’image est démontée après contrôle. Le fichier d’icône du volume est présent, mais son bit Custom Icon n’est pas activé ; ce détail cosmétique ne modifie pas le bundle. Le ZIP local passe son contrôle CRC ; ses fichiers et dossiers correspondent au bundle, avec 129 entrées AppleDouble de métadonnées macOS valides.
+
+Les commits utilisent l’identité GitHub byalmaz. Les fichiers vidéo privés restent hors Git et hors distribution. Cette publication n’ajoute aucune validation de restauration sur appareil physique ; les limites des essais locaux ci-dessous restent applicables.
+
 ## Build 43 — erreurs compréhensibles et mise à jour en récupération/DFU
 
 Les alertes affichent désormais un titre court, une explication et une prochaine étape selon le problème rencontré. La sortie brute du moteur reste dans le journal technique local, accessible volontairement. Elle n’apparaît plus dans l’alerte, les activités, les erreurs du catalogue ni celles des fiches appareil. Le rapport d’incident conserve une catégorie contrôlée et le code d’erreur, sans journal, chemin privé ou identifiant d’appareil. Un échec de validation réseau auprès d’Apple reste distinct d’un refus explicite de signature.

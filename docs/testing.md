@@ -1,5 +1,13 @@
 # Tests du cœur
 
+## Préversion publiée — build 44
+
+La [préversion v0.2.0-beta.4](https://github.com/byalmaz/iTelier/releases/tag/v0.2.0-beta.4), publiée le 8 octobre 2026, distribue le correctif de la case de conservation des données dans un DMG arm64 et son fichier SHA-256. Le tag cible `fe1597a4fb6a2dbe187662cd1c8709c514f9c2d4`. Le [workflow macOS 37813919604](https://github.com/byalmaz/iTelier/actions/runs/37813919604) a réussi : 153 tests XCTest sans échec, helper inerte, six tests d’intégrité des dépendances, compilation du bundle, vérification de la marque et création du ZIP et du DMG déposés en artifact.
+
+Le DMG public fait **97 505 253 octets**, avec l’empreinte `d51df9287aab18e2b80eb5f35005e645453ef6abd51432ded382edec57b94c65`, identique à celle calculée par GitHub. Son téléchargement anonyme et celui de `SHA256SUMS.txt` renvoient HTTP 200 ; la taille et l’empreinte téléchargées sont vérifiées. Monté en lecture seule, le DMG contient les 93 fichiers et 37 dossiers du bundle, avec contenus et permissions identiques, la version 0.2.0/build 44 et une signature stricte valide. Le lien Applications est correct et l’image est démontée après contrôle. Le fichier d’icône du volume est présent ; le bit Custom Icon reste absent comme au build 43. Le ZIP local passe le contrôle CRC et la comparaison de contenu et de permissions, avec 129 métadonnées AppleDouble valides.
+
+Les commits utilisent l’identité byalmaz et les fichiers vidéo privés restent exclus. Aucune commande USB ni restauration physique n’a été exécutée pour ce correctif ; les limites de la validation sur appareils fictifs restent applicables.
+
 ## Build 44 — choix explicite de conservation
 
 La case **Conserver les données de l’appareil** revient en tête des options de restauration. Cochée, elle sélectionne la mise à jour qui tente de préserver les données ; décochée, elle sélectionne l’effacement. Le texte et la dernière confirmation suivent ce choix. Le sélecteur introduit au build 43 avait rendu cette option moins identifiable. Le moteur, les contrôles de version, la déclaration en récupération/DFU et les confirmations de perte de données ne sont pas modifiés.

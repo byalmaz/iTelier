@@ -11,13 +11,13 @@
 
 ## Télécharger
 
-[Télécharger iTelier pour Mac Apple Silicon (.dmg)](https://github.com/byalmaz/iTelier/releases/download/v0.2.0-beta.3/iTelier-macOS-arm64.dmg) · [Notes de la préversion](https://github.com/byalmaz/iTelier/releases/tag/v0.2.0-beta.3)
+[Télécharger iTelier pour Mac Apple Silicon (.dmg)](https://github.com/byalmaz/iTelier/releases/download/v0.2.0-beta.4/iTelier-macOS-arm64.dmg) · [Notes de la préversion](https://github.com/byalmaz/iTelier/releases/tag/v0.2.0-beta.4)
 
-Préversion 0.2.0 (build 43), pour macOS 14 ou plus récent. Ouvrir le DMG et faire glisser iTelier dans Applications. Cette distribution de développement utilise une signature ad hoc et n’est pas notariée.
+Préversion 0.2.0 (build 44), pour macOS 14 ou plus récent. Ouvrir le DMG et faire glisser iTelier dans Applications. Cette distribution de développement utilise une signature ad hoc et n’est pas notariée.
 
 ## État du projet
 
-Version de développement 0.2.0 (build 43), macOS 14 ou plus récent. Les outils USB embarqués sont issus des paquets officiels Homebrew ciblés Sonoma.
+Version de développement 0.2.0 (build 44), macOS 14 ou plus récent. Les outils USB embarqués sont issus des paquets officiels Homebrew ciblés Sonoma.
 
 - Application native, avec mode de démonstration pour explorer l’interface sans appareil.
 - Outils de détection USB, de diagnostic et de restauration libimobiledevice/libirecovery/idevicerestore inclus dans l’app, avec leurs bibliothèques.
@@ -35,7 +35,7 @@ Version de développement 0.2.0 (build 43), macOS 14 ou plus récent. Les outils
 
 Les tests sur de vrais appareils restent nécessaires avant une version stable, en particulier pour les changements de mode USB et les restaurations complètes. Un build réussi ne prouve pas qu’une restauration a été testée.
 
-Validation du 8 octobre 2026 : **153 tests du cœur réussis**, en local et sur GitHub, avec helper de restauration inerte et contrôles d’interface français/anglais. Le build 43 améliore les messages d’erreur et la stabilité du bouton de sauvegarde ; la mise à jour en récupération/DFU peut être préparée avec une version et un build indiqués puis confirmés par l’utilisateur. Une saisie incorrecte peut compromettre les données. Le bundle release `arm64` et son DMG ont été vérifiés, dont la signature stricte, les permissions et l’empreinte du téléchargement public. Les versions précédentes ont validé la migration des données, le choix du chiffrement sur OFF et la lecture USB de l’aperçu personnel de l’écran verrouillé. L’app refuse une fausse réussite moteur et exige une confirmation terminale sans erreur fatale ; aucune restauration complète réussie sur appareil physique n’est confirmée. Voir [la portée de cette validation](docs/testing.md).
+Validation du 8 octobre 2026 : **153 tests du cœur réussis**, en local sur le build 43 et sur GitHub sur le build 44, avec helper de restauration inerte et contrôles d’interface français/anglais. Le build 44 rétablit la case explicite **Conserver les données de l’appareil**, vérifiée en mode normal, récupération et DFU. Il conserve les améliorations des messages d’erreur et du bouton de sauvegarde ; la mise à jour en récupération/DFU peut être préparée avec une version et un build indiqués puis confirmés par l’utilisateur. Une saisie incorrecte peut compromettre les données. Le bundle release `arm64` et son DMG ont été vérifiés, dont la signature stricte, les permissions et l’empreinte du téléchargement public. Les versions précédentes ont validé la migration des données, le choix du chiffrement sur OFF et la lecture USB de l’aperçu personnel de l’écran verrouillé. L’app refuse une fausse réussite moteur et exige une confirmation terminale sans erreur fatale ; aucune restauration complète réussie sur appareil physique n’est confirmée. Voir [la portée de cette validation](docs/testing.md).
 
 ## Compiler et lancer
 

@@ -1,5 +1,17 @@
 # Tests du cœur
 
+## Build 45 — firmware Yonkers et conservation des données
+
+Les journaux locaux du 1er et du 8 octobre montrent le même échec après l’écriture du système : le ticket Yonkers n’est pas obtenu, puis l’installation du firmware de composant échoue. Les deux essais utilisent la variante Developer Upgrade, sans effacement, et un IPSW de la même version et du même build que le système installé. Le correctif du build 36 supprimait le faux succès ; il ne changeait pas le moteur responsable de cet échec.
+
+Le manifeste de l’IPSW récent contient `Yonkers,SepObject` avant les seize variantes `Yonkers,SysTopPatch`. La bibliothèque libtatsu 1.0.5 accepte le premier préfixe `Yonkers,` et sélectionne donc SepObject, qui n’a aucun filtre de production ni de révision. Le [correctif amont de sélection](https://github.com/libimobiledevice/libtatsu/commit/cdbca263fa480b118bd458e32c6eeddafd48e35d) exige SysTopPatch. Les sources officielles non modifiées de libtatsu sont désormais épinglées au commit `e7d6ad13ef928aa609d0ccdfc586f7d6e8e049bf`. Le moteur idevicerestore est épinglé au commit `4b3e847e1d9a1210049a9e3f1d1caa38650c6617`, qui inclut le [routage YonkersIR1 corrigé](https://github.com/libimobiledevice/idevicerestore/commit/4b3e847e1d9a1210049a9e3f1d1caa38650c6617). Les archives et les binaires de compilation sont vérifiés ; un runtime ancien ou ambigu est refusé avant de compiler l’app. L’ABI, les licences, les sources et les recettes de compilation sont conservées dans le bundle.
+
+Validation locale du 8 octobre : **154 tests du cœur réussis**, helper de restauration inerte et six tests d’intégrité des dépendances réussis. Le nouveau harnais charge la vraie bibliothèque libtatsu du bundle dans une copie privée : l’ancienne version choisit SepObject et échoue aux quatre cas de sélection, la nouvelle passe ces cas, dont l’absence de variante compatible. Un second harnais compile le bloc de décision amont réel avec des handlers inertes et vérifie cinq routages, dont YonkersIR1 vers le handler générique. Les trois tests du runtime passent avec le bundle corrigé et sont ajoutés à la CI. Build 45 release arm64 compilé, signature stricte et marque vérifiées dans ses 97 fichiers.
+
+Un échec de firmware de composant reçoit maintenant une explication française/anglaise qui conseille de vérifier l’écran, puis **Finder → Mettre à jour** si l’appareil reste sur le logo Apple. Le message ne recommande plus de répéter la même restauration et ne confond pas cet échec avec l’arrêt de signature d’une version d’iOS.
+
+Le défaut de sélection est reproduit ; les journaux ne contiennent pas la requête TSS complète et ne permettent pas de reconstituer la réponse exacte d’Apple. Aucune restauration physique ni commande USB n’a été exécutée pour ces vérifications. Le correctif du code et ses régressions ne constituent pas une confirmation du démarrage réel d’un appareil après restauration.
+
 ## Préversion publiée — build 44
 
 La [préversion v0.2.0-beta.4](https://github.com/byalmaz/iTelier/releases/tag/v0.2.0-beta.4), publiée le 8 octobre 2026, distribue le correctif de la case de conservation des données dans un DMG arm64 et son fichier SHA-256. Le tag cible `fe1597a4fb6a2dbe187662cd1c8709c514f9c2d4`. Le [workflow macOS 37813919604](https://github.com/byalmaz/iTelier/actions/runs/37813919604) a réussi : 153 tests XCTest sans échec, helper inerte, six tests d’intégrité des dépendances, compilation du bundle, vérification de la marque et création du ZIP et du DMG déposés en artifact.

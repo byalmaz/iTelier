@@ -74,5 +74,6 @@ def retrieve_source(source):
 with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
     list(executor.map(retrieve_source, sources))
 (source_directory / "sources.json").write_text(json.dumps(sources, indent=2) + "\n")
+subprocess.run(["python3", str(project / "scripts/build-tatsu.py"), str(runtime)], check=True)
 subprocess.run(["python3", str(project / "scripts/build-restore-engine.py"), str(runtime)], check=True)
 print("USB and restoration runtime ready at " + str(runtime))

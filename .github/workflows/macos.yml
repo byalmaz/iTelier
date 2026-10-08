@@ -37,6 +37,8 @@ jobs:
           bash scripts/build-app.sh
       - name: Verify bundle branding
         run: python3 scripts/check-branding.py --bundle dist/iTelier.app
+      - name: Test component firmware requests without a device
+        run: python3 scripts/test-restore-runtime.py --bundle dist/iTelier.app
       - name: Archive bundle with executable permissions
         run: ditto -c -k --keepParent dist/iTelier.app dist/iTelier-macOS.zip
       - name: Create and verify installation disk image

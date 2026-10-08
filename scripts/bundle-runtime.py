@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Embed USB tools and their complete non-system dylib dependency closure."""
 import argparse
+import hashlib
 import json
 from pathlib import Path
 import shutil
@@ -8,9 +9,47 @@ import subprocess
 
 parser = argparse.ArgumentParser()
 parser.add_argument("runtime", type=Path)
-parser.add_argument("bundle", type=Path)
+parser.add_argument("bundle", type=Path, nargs="?")
+parser.add_argument("--check-runtime", action="store_true")
 args = parser.parse_args()
 runtime = args.runtime.resolve()
+
+# Refuser les anciens moteurs même lorsque le cache possède déjà sources.json.
+required_revisions = {
+    "idevicerestore": ("4b3e847e1d9a1210049a9e3f1d1caa38650c6617",
+                       "f2ea8a6aefe5f4de5b5163eb128265949c2b2a211d5aaa62372b7845fd8935b0",
+                       "bin/idevicerestore"),
+    "libtatsu": ("e7d6ad13ef928aa609d0ccdfc586f7d6e8e049bf",
+                 "c5222d97ae036e9990856bc36a0e1e7644841e3b3475e6e0b4662bc2b574fc91",
+                 "lib/libtatsu.0.dylib"),
+}
+source_manifest = runtime / "_sources" / "sources.json"
+if not source_manifest.is_file():
+    raise RuntimeError("Missing corresponding sources. Run scripts/prepare-runtime.py first.")
+source_entries = json.loads(source_manifest.read_text())
+for package, (commit, digest, binary_name) in required_revisions.items():
+    origin = runtime / package / commit[:8]
+    binaries = list(runtime.glob(package + "/*/" + binary_name))
+    metadata_path = origin / "upstream-build.json"
+    if binaries != [origin / binary_name] or not metadata_path.is_file():
+        raise RuntimeError("Outdated or ambiguous " + package + ". Run scripts/prepare-runtime.py first.")
+    metadata = json.loads(metadata_path.read_text())
+    url = "https://codeload.github.com/libimobiledevice/" + package + "/tar.gz/" + commit
+    entries = [entry for entry in source_entries if entry.get("package") == package]
+    if len(entries) != 1 or any(metadata.get(key) != value or entries[0].get(key) != value
+                                for key, value in (("commit", commit), ("sha256", digest), ("url", url))):
+        raise RuntimeError("Unverified " + package + " revision. Run scripts/prepare-runtime.py first.")
+    archive = runtime / "_sources" / (package + "-" + commit + ".tar.gz")
+    binary = binaries[0]
+    if (not archive.is_file() or hashlib.sha256(archive.read_bytes()).hexdigest() != digest
+            or runtime not in binary.resolve().parents
+            or hashlib.sha256(binary.read_bytes()).hexdigest() != metadata.get("binary_sha256")):
+        raise RuntimeError("Modified " + package + " runtime or sources. Run scripts/prepare-runtime.py first.")
+if args.check_runtime:
+    print("Verified restoration runtime: idevicerestore 4b3e847e, libtatsu e7d6ad13.")
+    raise SystemExit(0)
+if args.bundle is None:
+    parser.error("bundle is required unless --check-runtime is used")
 contents = args.bundle.resolve() / "Contents"
 helpers = contents / "Helpers"
 frameworks = contents / "Frameworks"

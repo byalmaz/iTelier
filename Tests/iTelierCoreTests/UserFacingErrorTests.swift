@@ -69,6 +69,43 @@ final class UserFacingErrorTests: XCTestCase {
         }
     }
 
+    func testComponentFirmwareFailureExplainsInterruptionAndOffersFinderWithoutRetrying() {
+        let failures = ["Unable to fetch Yonkers ticket", "Unable to fetch Savage ticket", "Unable to fetch Rose ticket",
+                        "Unable to fetch SE ticket", "restore_send_firmware_updater_data: Couldn't get Yonkers firmware data!",
+                        "Couldn't get PRIVATEDEVICE firmware data", "Could not determine Savage firmware component"]
+        for language in ["fr", "en"] {
+            withLanguage(language) {
+                for failure in failures {
+                    let output = "TSS request failed\nTSS request was rejected\nReceived SHSH blobs\nPasswordProtected\n\(failure)\nUnable to send FirmwareUpdater data\nECID: 99999888887777\nPRIVATEBUILD /private/SECRETFILE"
+                    let value = UserFacingError.presentation(for: DeviceServiceError.commandFailed("idevicerestore", 1, output))
+                    XCTAssertEqual(value.diagnosticCategory, "restoreComponentFirmware", failure)
+                    XCTAssertEqual(value.title, language == "fr" ? "L’installation a été interrompue" : "Installation was interrupted")
+                    XCTAssertTrue(value.message.contains(language == "fr" ? "composant" : "component"))
+                    XCTAssertTrue(value.message.contains(language == "fr" ? "vérifiez son écran" : "check its screen"))
+                    XCTAssertTrue(value.message.contains("Finder"))
+                    XCTAssertTrue(value.message.contains(language == "fr" ? "Mettre à jour" : "Update"))
+                    assertNoPrivateOutput(value)
+                    for forbidden in ["Yonkers", "TSS", "SHSH", "FirmwareUpdater", "réessay", "try again", "câble", "cable",
+                                      "réinitialis", "reset", "effac", "erase", "intact", "preserved", "version autorisée", "authorised version"] {
+                        XCTAssertFalse(value.message.contains(forbidden), forbidden)
+                    }
+                }
+                let unsigned = UserFacingError.presentation(for: DeviceServiceError.commandFailed("idevicerestore", 1,
+                    "Firmware is not signed\nUnable to fetch Yonkers ticket"))
+                XCTAssertEqual(unsigned.diagnosticCategory, "appleSigningRejected")
+                let transition = UserFacingError.presentation(for: DeviceServiceError.commandFailed("idevicerestore", 1,
+                    "Unable to fetch Yonkers ticket\nFailed to enter recovery mode"))
+                XCTAssertEqual(transition.diagnosticCategory, "restoreRecoveryTransition")
+                let unrelated = UserFacingError.presentation(for: DeviceServiceError.commandFailed("idevicerestore", 1,
+                    "Received Yonkers ticket\nTSS request failed\nCouldn't get response\nReceived SE firmware data"))
+                XCTAssertEqual(unrelated.diagnosticCategory, "appleSigningUnavailable")
+                let check = UserFacingError.presentation(for: DeviceServiceError.commandFailed("idevicediagnostics", 1,
+                    "Unable to fetch Yonkers ticket"), operation: .deviceCheck)
+                XCTAssertEqual(check.diagnosticCategory, "restoreOrDeviceCommand")
+            }
+        }
+    }
+
     func testFinalPreparationFailureTakesPriorityOverEarlierPairingInstructions() {
         let value = UserFacingError.presentation(for: DeviceServiceError.commandFailed("idevicerestore", 1,
             "PairingDialogResponsePending\nPlease enter your passcode\nReceived SHSH blobs\nFailed to enter recovery mode"))
@@ -221,6 +258,7 @@ final class UserFacingErrorTests: XCTestCase {
             (DeviceServiceError.commandFailed("idevicerestore", 1, "Failed to enter recovery mode"), .restoration),
             (DeviceServiceError.commandFailed("idevicerestore", 1, "TSS request failed"), .restoration),
             (DeviceServiceError.commandFailed("idevicerestore", 1, "TSS request was rejected"), .restoration),
+            (DeviceServiceError.commandFailed("idevicerestore", 1, "Unable to fetch Yonkers ticket"), .restoration),
             (DeviceServiceError.commandFailed("ideviceinfo", 1, "UserDeniedPairing"), .deviceCheck),
             (DeviceServiceError.commandFailed("ideviceinfo", 1, "PasswordProtected"), .deviceCheck),
             (DeviceServiceError.commandFailed("idevicerestore", 1, "No device found"), .restoration),

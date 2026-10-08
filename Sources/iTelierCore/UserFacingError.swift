@@ -55,12 +55,18 @@ public struct UserFacingError: Sendable {
                         diagnosticCategory: "restoreRecoveryTransition")
         }
         // Les mentions ordinaires de signature ou « Received SHSH blobs » ne sont pas des refus.
+        let componentFirmwareFailed = restoration && componentFirmwareFailure(text)
         if restoration && containsAny(text, ["isn't eligible for the requested build", "is not eligible for the requested build",
-                                             "firmware is not signed", "version is not signed", "is no longer being signed",
-                                             "tss request was rejected"]) {
+                                             "firmware is not signed", "version is not signed", "is no longer being signed"])
+            || (restoration && text.contains("tss request was rejected") && !componentFirmwareFailed) {
             return Self(title: L("Cette version n’a pas pu être autorisée"),
                         message: L("Apple n’a pas validé cette version pour l’appareil. Actualisez le catalogue et choisissez une version autorisée, puis vérifiez l’état de l’appareil avant de réessayer."),
                         diagnosticCategory: "appleSigningRejected")
+        }
+        if componentFirmwareFailed {
+            return Self(title: L("L’installation a été interrompue"),
+                        message: L("Le logiciel nécessaire à un composant de l’appareil n’a pas pu être préparé. Gardez l’appareil connecté et vérifiez son écran. S’il reste bloqué sur le logo Apple, ouvrez le Finder et choisissez « Mettre à jour »."),
+                        diagnosticCategory: "restoreComponentFirmware")
         }
         if restoration && containsAny(text, ["tss request failed", "unable to get shsh blobs", "failed to fetch shsh", "unable to fetch shsh"]) {
             return Self(title: L("La validation auprès d’Apple n’a pas abouti"),
@@ -256,5 +262,14 @@ public struct UserFacingError: Sendable {
 
     private static func containsAny(_ text: String, _ phrases: [String]) -> Bool {
         phrases.contains(where: text.contains)
+    }
+
+    private static func componentFirmwareFailure(_ text: String) -> Bool {
+        // Un ticket de composant ne décrit pas la signature de la version du système.
+        // Les motifs restent sur une seule ligne pour ne pas relier des étapes sans rapport.
+        let patterns = [#"(?:couldn't|could not|unable to) get [^\r\n]{1,80} firmware data"#,
+                        #"unable to fetch (?:yonkers|savage|rose|se|veridian|baobab|appletcon|pcon1|appletypecretimer) ticket"#,
+                        #"could not determine (?:yonkers|savage) firmware component"#]
+        return patterns.contains { text.range(of: $0, options: .regularExpression) != nil }
     }
 }

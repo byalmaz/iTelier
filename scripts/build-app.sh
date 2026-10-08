@@ -36,6 +36,7 @@ if [ ! -f "$runtime_directory/_sources/sources.json" ]; then
   printf 'USB runtime missing. Run python3 scripts/prepare-runtime.py before building.\n' >&2
   exit 1
 fi
+python3 "$script_directory/bundle-runtime.py" "$runtime_directory" --check-runtime
 
 cd "$project_directory"
 swift_flags=()
@@ -94,7 +95,7 @@ cat > "$staged_bundle/Contents/Info.plist" <<'PLIST'
   <key>CFBundleExecutable</key><string>iTelier</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>0.2.0</string>
-  <key>CFBundleVersion</key><string>44</string>
+  <key>CFBundleVersion</key><string>45</string>
   <key>CFBundleDevelopmentRegion</key><string>fr</string>
   <key>CFBundleLocalizations</key><array><string>fr</string><string>en</string></array>
   <key>LSMinimumSystemVersion</key><string>14.0</string>

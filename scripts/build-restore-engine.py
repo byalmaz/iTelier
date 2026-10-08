@@ -15,8 +15,8 @@ import sys
 import tarfile
 import urllib.request
 
-COMMIT = "60192e97f87d1bbab5c493684e0a245b0966363f"
-SHA256 = "17baa839a89247263ef558b55a0e42ca40234cd960627aedd2e956c779ce1ade"
+COMMIT = "4b3e847e1d9a1210049a9e3f1d1caa38650c6617"
+SHA256 = "f2ea8a6aefe5f4de5b5163eb128265949c2b2a211d5aaa62372b7845fd8935b0"
 URL = "https://codeload.github.com/libimobiledevice/idevicerestore/tar.gz/" + COMMIT
 runtime = Path(sys.argv[1]).resolve()
 if platform.system() != "Darwin" or platform.machine() not in ("arm64", "x86_64"):
@@ -30,15 +30,20 @@ if not archive_path.is_file() or hashlib.sha256(archive_path.read_bytes()).hexdi
 
 work = runtime / "_restore-build"
 work.mkdir(exist_ok=True)
+source = work / ("idevicerestore-" + COMMIT)
+# Ne compiler que les fichiers de l'archive vérifiée, sans résidus d'un ancien essai.
+if source.is_symlink():
+    raise RuntimeError("Unexpected symbolic link in restore source directory")
+if source.exists():
+    shutil.rmtree(source)
 with tarfile.open(archive_path) as archive:
     for member in archive.getmembers():
         if work not in (work / member.name).resolve().parents or member.issym() or member.islnk():
             raise RuntimeError("Unsafe source archive member")
     archive.extractall(work)
-source = work / ("idevicerestore-" + COMMIT)
 config = source / "config.h"
 config.write_text('''#define PACKAGE_NAME "idevicerestore"
-#define PACKAGE_VERSION "1.1.0-git-60192e97"
+#define PACKAGE_VERSION "1.1.0-git-4b3e847e"
 #define VERSION PACKAGE_VERSION
 #define PACKAGE_URL "https://libimobiledevice.org"
 #define PACKAGE_BUGREPORT "https://github.com/libimobiledevice/idevicerestore/issues"
@@ -76,6 +81,7 @@ for name in ("COPYING", "COPYING.LESSER", "AUTHORS", "README.md"):
         shutil.copy2(source / name, origin / name)
 shutil.copy2(config, origin / "config.h")
 metadata = {"commit": COMMIT, "url": URL, "sha256": SHA256,
+            "binary_sha256": hashlib.sha256(output.read_bytes()).hexdigest(),
             "configuration": "Darwin, macOS 14+, system curl/zlib, without limera1n; see build-restore-engine.py"}
 (origin / "upstream-build.json").write_text(json.dumps(metadata, indent=2) + "\n")
 sources_path = runtime / "_sources" / "sources.json"
@@ -84,4 +90,8 @@ sources.append(dict(metadata, package="idevicerestore"))
 sources_path.write_text(json.dumps(sources, indent=2) + "\n")
 shutil.copy2(Path(__file__), runtime / "_sources" / "build-restore-engine.py")
 shutil.copy2(config, runtime / "_sources" / "idevicerestore-config.h")
+# Un moteur précédemment généré ne doit pas rester un candidat au bundling.
+for previous in origin.parent.iterdir():
+    if previous.is_dir() and previous != origin:
+        shutil.rmtree(previous)
 print("Built official idevicerestore sources at " + COMMIT[:8])

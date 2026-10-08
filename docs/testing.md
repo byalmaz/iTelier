@@ -1,5 +1,13 @@
 # Tests du cœur
 
+## Préversion publiée — build 45
+
+La [préversion v0.2.0-beta.5](https://github.com/byalmaz/iTelier/releases/tag/v0.2.0-beta.5), publiée le 8 octobre 2026, distribue le DMG arm64 du build 45 et son fichier SHA-256. Le tag cible `c2a1aed72e1043674484e1bdd173dbfcaeebbcad`. Le [workflow macOS 37829969367](https://github.com/byalmaz/iTelier/actions/runs/37829969367) a réussi les 154 tests XCTest, le helper inerte, les six tests d’intégrité des dépendances, la compilation et les trois nouveaux tests de firmware de composant sur le bundle final, puis la création du ZIP et du DMG déposés en artifact.
+
+Le DMG fait **97 634 275 octets**, avec l’empreinte `7972f69b76389a4a3bb192a97b3829bc86f9012bc86ae345fd11baeed7495704`, identique aux valeurs locale, serveur et téléchargement public. Le DMG et son checksum téléchargés sans authentification renvoient HTTP 200. Le contrôle en lecture seule confirme 97 fichiers et 36 dossiers avec contenus et permissions identiques au bundle, version 0.2.0/build 45, signature stricte valide, lien Applications correct, révisions libtatsu et idevicerestore attendues. L’image est démontée après contrôle. Le ZIP passe le CRC, la comparaison du contenu et des permissions, avec 132 métadonnées AppleDouble valides. Les recettes embarquées sont identiques aux scripts du dépôt.
+
+Les commits utilisent l’identité byalmaz ; les fichiers vidéo privés restent exclus. Cette publication ne constitue pas une validation de restauration sur appareil physique.
+
 ## Build 45 — firmware Yonkers et conservation des données
 
 Les journaux locaux du 1er et du 8 octobre montrent le même échec après l’écriture du système : le ticket Yonkers n’est pas obtenu, puis l’installation du firmware de composant échoue. Les deux essais utilisent la variante Developer Upgrade, sans effacement, et un IPSW de la même version et du même build que le système installé. Le correctif du build 36 supprimait le faux succès ; il ne changeait pas le moteur responsable de cet échec.

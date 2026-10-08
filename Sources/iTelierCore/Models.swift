@@ -121,10 +121,20 @@ public struct FirmwareInfo: Sendable {
         return variant
     }
 
-    public func preservationIssue(for device: DeviceSnapshot) -> String? {
+    public func preservationIssue(for device: DeviceSnapshot, declaration: RestoreSystemDeclaration? = nil) -> String? {
         guard supports(device, mode: .preserveData) else { return L("Cet IPSW ne permet pas de conserver les données de cet appareil.") }
-        guard device.mode == .normal, let currentVersion = device.osVersion, let currentBuild = device.buildVersion else {
-            return L("Déverrouillez l’appareil en mode normal pour vérifier sa version avant de conserver les données.")
+        let currentVersion: String, currentBuild: String
+        if device.mode == .normal {
+            // Une lecture normale prime toujours une déclaration antérieure.
+            guard let observedVersion = device.osVersion, let observedBuild = device.buildVersion else {
+                return L("Déverrouillez l’appareil en mode normal pour vérifier sa version avant de conserver les données.")
+            }
+            currentVersion = observedVersion; currentBuild = observedBuild
+        } else {
+            guard let declaration, declaration.matches(device) else {
+                return L("L’appareil ne peut pas indiquer sa version dans ce mode. Renseignez la version et le numéro de build installés pour tenter de conserver vos données.")
+            }
+            currentVersion = declaration.version; currentBuild = declaration.build
         }
         guard RestoreValidator.canUpdate(fromVersion: currentVersion, build: currentBuild, toVersion: version, build: build) else {
             return L("La conservation des données exige la même version ou une version plus récente. Un retour en arrière est bloqué.")
@@ -139,12 +149,16 @@ public struct RestoreApproval: Sendable {
     public let acknowledgedDataLoss: Bool
     public let mode: RestoreMode
     public let acknowledgedPreservationRisk: Bool
+    public let systemDeclaration: RestoreSystemDeclaration?
+    public let acknowledgedDeclaredSystem: Bool
 
     public init(deviceID: String, firmwareSHA256: String, acknowledgedDataLoss: Bool,
-                mode: RestoreMode = .erase, acknowledgedPreservationRisk: Bool = false) {
+                mode: RestoreMode = .erase, acknowledgedPreservationRisk: Bool = false,
+                systemDeclaration: RestoreSystemDeclaration? = nil, acknowledgedDeclaredSystem: Bool = false) {
         self.deviceID = deviceID; self.firmwareSHA256 = firmwareSHA256
         self.acknowledgedDataLoss = acknowledgedDataLoss
         self.mode = mode; self.acknowledgedPreservationRisk = acknowledgedPreservationRisk
+        self.systemDeclaration = systemDeclaration; self.acknowledgedDeclaredSystem = acknowledgedDeclaredSystem
     }
 }
 

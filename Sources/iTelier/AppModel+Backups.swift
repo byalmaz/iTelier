@@ -3,20 +3,49 @@ import iTelierCore
 
 extension AppModel {
     var canStartBackup: Bool {
-        !busy && !isRefreshing && !isDemo && !recoveryRequired && safetyStorageError == nil
+        canRequestBackup && !isRefreshing
+    }
+    var canRequestBackup: Bool {
+        !busy && !isDemo && !recoveryRequired && safetyStorageError == nil
             && device?.family.supportsLocalBackup == true && device?.mode == .normal && device?.ecid != nil && installed("idevicebackup2")
     }
     var backupFolderLabel: String { (backupDirectoryPath as NSString).abbreviatingWithTildeInPath }
 
+    func invalidateBackupEncryptionIfNeeded() {
+        guard let target = backupEncryptionTarget else { return }
+        guard let current = device, current.id == target.id, current.ecid == target.ecid,
+              current.productType == target.productType, current.mode == .normal else {
+            backupEncryptionEnabled = nil; backupEncryptionTarget = nil
+            return
+        }
+    }
+
     func readBackupEncryption() async {
-        guard !busy, !isDemo, let device, device.family.supportsLocalBackup, device.mode == .normal else { return }
-        isReadingBackupEncryption = true; backupEncryptionEnabled = nil
-        defer { isReadingBackupEncryption = false }
         do {
-            let enabled = try await BackupHost.encryptionEnabled(deviceID: device.id)
-            guard !Task.isCancelled, self.device?.id == device.id else { return }
+            // Une nouvelle sélection attend la fin de la lecture précédente, sans la chevaucher.
+            while isReadingBackupEncryption { try await Task.sleep(nanoseconds: 100_000_000) }
+            try Task.checkCancellation()
+            guard !busy, !isDemo, let requested = device, requested.family.supportsLocalBackup, requested.mode == .normal else { return }
+            isReadingBackupEncryption = true
+            defer { isReadingBackupEncryption = false }
+            invalidateBackupEncryptionIfNeeded()
+            backupEncryptionTarget = requested
+            // Garder le résultat connu pendant la relecture évite de déplier le formulaire.
+            while isRefreshing { try await Task.sleep(nanoseconds: 100_000_000) }
+            try Task.checkCancellation()
+            guard let current = device, current.id == requested.id, current.ecid == requested.ecid,
+                  current.productType == requested.productType, current.mode == .normal else { return }
+            let enabled = try await BackupHost.encryptionEnabled(deviceID: current.id)
+            guard !Task.isCancelled, backupEncryptionTarget != nil, self.device?.id == current.id,
+                  self.device?.ecid == current.ecid, self.device?.productType == current.productType,
+                  self.device?.mode == .normal else { return }
             backupEncryptionEnabled = enabled
-        } catch { /* The worker rechecks before changing encryption. */ }
+        } catch is CancellationError {
+            return
+        } catch {
+            // Une lecture échouée ne confirme plus le statut. Le helper le revérifie avant toute écriture.
+            backupEncryptionEnabled = nil
+        }
     }
 
     func reloadBackups() async {
@@ -90,8 +119,25 @@ extension AppModel {
     }
 
     func startBackup(encrypted: Bool, password: String) {
-        guard canStartBackup, let device else { return }
-        launchBackup(device: device, backup: nil, encrypted: encrypted, password: password)
+        guard canRequestBackup, let requested = device else { return }
+        // Réserver immédiatement le clic : aucune autre lecture USB ne démarre pendant l’attente.
+        isPreparingBackup = true
+        Task {
+            defer { isPreparingBackup = false }
+            do {
+                while isRefreshing { try await Task.sleep(nanoseconds: 100_000_000) }
+                try Task.checkCancellation()
+                guard let current = device, current.id == requested.id, current.ecid == requested.ecid,
+                      current.productType == requested.productType, current.mode == .normal else {
+                    throw BackupError.invalid(L("L’appareil connecté ne correspond plus à l’appareil sélectionné."))
+                }
+                isPreparingBackup = false
+                guard canStartBackup else { return }
+                launchBackup(device: current, backup: nil, encrypted: encrypted, password: password)
+            } catch is CancellationError {
+                return
+            } catch { reportFailure(error) }
+        }
     }
     func presentBackupRestore(_ backup: LocalBackup) {
         guard canStartBackup, backup.restorationIssue(for: device) == nil else { return }

@@ -15,7 +15,7 @@ struct RestoreSession: Identifiable {
 extension AppModel {
     /// Les tâches USB ordinaires restent protégées par `busy`. La préparation locale
     /// d’une autre cible est permise pendant les écritures indépendantes.
-    var preparationBusy: Bool { isReadingDeviceInformation || isReadingBackupEncryption || isBackupBusy || isInspecting || isChecking || isDownloadingFirmware || isChoosingDownloadFolder || isManagingReference }
+    var preparationBusy: Bool { isReadingDeviceInformation || isReadingBackupEncryption || isPreparingBackup || isBackupBusy || isInspecting || isChecking || isDownloadingFirmware || isChoosingDownloadFolder || isManagingReference }
     var activeRestoreSessions: [RestoreSession] { restoreSessions.filter(\.isActive) }
     var selectedDeviceRestoring: Bool {
         guard let device else { return false }
@@ -35,7 +35,7 @@ extension AppModel {
             deviceModel: target?.productType, systemVersion: target?.systemVersion,
             firmwareVersion: target?.firmwareVersion, firmwareBuild: target?.firmwareBuild, restoreMode: target?.mode)
         do { try journal.update(context); return true }
-        catch { safetyStorageError = error.localizedDescription; return false }
+        catch { safetyStorageError = UserFacingError.presentation(for: error).message; return false }
     }
 
     func updateRestoreSummary() {
@@ -54,7 +54,8 @@ extension AppModel {
         }
     }
 
-    func startRestore(device: DeviceSnapshot, firmware: FirmwareInfo, mode: RestoreMode) async {
+    func startRestore(device: DeviceSnapshot, firmware: FirmwareInfo, mode: RestoreMode,
+                      systemDeclaration: RestoreSystemDeclaration? = nil, acknowledgedDeclaredSystem: Bool = false) async {
         let directory: URL
         do { directory = try RestoreHost.prepare(target: RestoreTarget(device: device, firmware: firmware, mode: mode)) }
         catch { reportFailure(error); return }
@@ -68,7 +69,8 @@ extension AppModel {
         resetAcknowledgements(clearOutcome: false)
         updateRestoreSummary()
         let approval = RestoreApproval(deviceID: device.id, firmwareSHA256: firmware.sha256,
-            acknowledgedDataLoss: mode == .erase, mode: mode, acknowledgedPreservationRisk: mode == .preserveData)
+            acknowledgedDataLoss: mode == .erase, mode: mode, acknowledgedPreservationRisk: mode == .preserveData,
+            systemDeclaration: systemDeclaration, acknowledgedDeclaredSystem: acknowledgedDeclaredSystem)
         addActivity(L("Restauration lancée"), "\(device.name) · \(mode.title) · \(firmware.version) (\(firmware.build))", symbol: "arrow.triangle.2.circlepath")
         do {
             try await service.restore(device: device, firmware: firmware, approval: approval, sessionDirectory: directory) { [weak self] event in
@@ -85,13 +87,13 @@ extension AppModel {
                 resumeRestoreObservation()
                 return
             }
-            do { try RestoreHost.recordPreparationFailure(directory) } catch { safetyStorageError = error.localizedDescription }
+            do { try RestoreHost.recordPreparationFailure(directory) } catch { safetyStorageError = UserFacingError.presentation(for: error).message }
             if let final = RestoreHost.read(directory) { session.snapshot = final }
             session.snapshot.log.append(String(error.localizedDescription.prefix(1000)))
             session.isActive = false
             _ = trackRestore(session)
             reportFailure(error)
-            addActivity(L("Échec de restauration"), "\(device.name) · \(error.localizedDescription)", symbol: "exclamationmark.triangle")
+            addActivity(L("Échec de restauration"), "\(device.name) · \(UserFacingError.presentation(for: error, operation: .restoration).message)", symbol: "exclamationmark.triangle")
         }
         if let index = restoreSessions.firstIndex(where: { $0.id == session.id }) { restoreSessions[index] = session }
         updateRestoreSummary()

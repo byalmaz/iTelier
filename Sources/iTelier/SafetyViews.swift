@@ -7,17 +7,35 @@ struct RestoreOptionsView: View {
         Surface {
             VStack(alignment: .leading, spacing: 16) {
                 Text(L("Options de restauration")).font(.system(size: 23, weight: .light))
-                Toggle(L("Conserver les données de l’appareil"), isOn: Binding(
-                    get: { model.restoreMode == .preserveData },
-                    set: { if model.canChangeRestoreMode { model.restoreMode = $0 ? .preserveData : .erase } }
-                )).font(.system(size: 14, weight: .medium)).disabled(!model.canChangeRestoreMode)
+                Picker(L("Opération"), selection: Binding(
+                    get: { model.restoreMode },
+                    set: { if model.canChangeRestoreMode { model.restoreMode = $0 } }
+                )) {
+                    Text(L("Mettre à jour")).tag(RestoreMode.preserveData)
+                    Text(L("Restaurer")).tag(RestoreMode.erase)
+                }.pickerStyle(.segmented).disabled(!model.canChangeRestoreMode)
                 Text(model.restoreMode == .preserveData
                     ? L("Réinstalle iOS en conservant les apps, photos et réglages. Une sauvegarde reste nécessaire : une erreur peut entraîner une perte de données. Aucun effacement automatique en cas d’échec.")
                     : L("Toutes les données de l’appareil seront effacées. Préparez une sauvegarde et gardez le câble branché pendant l’opération."))
                     .font(.system(size: 13)).foregroundStyle(Palette.secondary).lineSpacing(4)
                 if model.restoreMode == .preserveData, let device = model.device, let firmware = model.firmware,
-                   let issue = firmware.preservationIssue(for: device) {
+                   let issue = firmware.preservationIssue(for: device, declaration: model.systemDeclaration) {
                     Label(issue, systemImage: "exclamationmark.triangle").font(.system(size: 11)).foregroundStyle(Palette.amber)
+                }
+                if model.needsSystemDeclaration {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text(L("Version installée avant le problème")).font(.system(size: 13, weight: .medium))
+                        HStack {
+                            TextField(L("Version (ex. 27.2)"), text: $model.declaredSystemVersion)
+                            TextField(L("Build (ex. 24B5089g)"), text: $model.declaredSystemBuild)
+                        }.textFieldStyle(.roundedBorder)
+                        Text(L("Le build est le numéro détaillé de la version, affiché entre parenthèses dans les informations de l’appareil."))
+                            .font(.system(size: 11)).foregroundStyle(Palette.secondary).fixedSize(horizontal: false, vertical: true)
+                        Text(L("Cette version est indiquée par vous. Une information incorrecte peut conduire à installer une version trop ancienne et compromettre vos données."))
+                            .font(.system(size: 11)).foregroundStyle(Palette.amber).fixedSize(horizontal: false, vertical: true)
+                        Toggle(L("Je confirme la version et le build installés avant le problème."), isOn: $model.declaredSystemAcknowledged)
+                            .disabled(model.systemDeclaration == nil)
+                    }.disabled(!model.canChangeRestoreMode || model.preparationBusy)
                 }
                 Toggle(model.restoreMode == .preserveData ? L("J’ai une sauvegarde récente de mes données.") : L("J’ai sauvegardé mes données ou j’accepte de les perdre."), isOn: $model.backupAcknowledged)
                 Toggle(L("Je dispose des identifiants Apple nécessaires à l’activation."), isOn: $model.appleIDAcknowledged)

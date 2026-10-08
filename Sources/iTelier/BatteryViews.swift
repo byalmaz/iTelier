@@ -285,6 +285,6 @@ struct BatteryDetailView: View {
         let text = header + "\n\n" + rows.map { $0.0 + ": " + ($0.1 ?? L("Non exposé")) }.joined(separator: "\n")
             + "\n\n" + L("Les numéros de série ne sont pas inclus dans cet export.")
         do { try text.write(to: url, atomically: true, encoding: .utf8); exportError = nil }
-        catch { exportError = error.localizedDescription }
+        catch { exportError = UserFacingError.presentation(for: error, operation: .idle).message }
     }
 }

@@ -14,7 +14,7 @@ extension AppModel {
                 systemVersion: target.systemVersion, firmwareVersion: target.firmwareVersion,
                 firmwareBuild: target.firmwareBuild, restoreMode: target.mode)
         }
-        return SupportContext(operation: isBackupBusy ? (backupOperation == .backup ? .backup : .backupRestore) : isRestoring ? .restoration : isDownloadingFirmware ? .firmwareDownload : .idle,
+        return SupportContext(operation: isBackupBusy ? (backupOperation == .backup ? .backup : .backupRestore) : isRestoring ? .restoration : isDownloadingFirmware ? .firmwareDownload : isChecking ? .deviceCheck : isInspecting ? .firmwareInspection : .idle,
             phase: isBackupBusy ? backupPhase : isRestoring ? restorePhase : L("Consultation d’iTelier"), deviceModel: device?.productType,
             systemVersion: device?.osVersion, firmwareVersion: firmware?.version ?? downloadRelease?.version,
             firmwareBuild: firmware?.build ?? downloadRelease?.buildID, restoreMode: restoreMode)
@@ -33,7 +33,7 @@ extension AppModel {
                let modeName = interrupted.context.restoreMode, let mode = RestoreMode(rawValue: modeName) { restoreMode = mode; activeRestoreMode = mode }
             if recoveryRequired { page = .restore }
             AppDelegate.onCleanExit = { [weak self] in try? self?.safetyJournal?.closeNormally() }
-        } catch { safetyStorageError = L("Le journal de sécurité est inaccessible. La restauration reste bloquée : \(error.localizedDescription)") }
+        } catch { safetyStorageError = L("Le journal de sécurité est inaccessible. La restauration reste bloquée : \(UserFacingError.presentation(for: error).message)") }
         resumeRestoreObservation()
     }
 
@@ -41,14 +41,16 @@ extension AppModel {
         guard let journal = safetyJournal else { return false }
         var context = supportContext; context.operation = operation; context.phase = phase
         do { try journal.update(context); return true }
-        catch { safetyStorageError = L("Impossible d’enregistrer l’état de l’opération. \(error.localizedDescription)"); return false }
+        catch { safetyStorageError = L("Impossible d’enregistrer l’état de l’opération. \(UserFacingError.presentation(for: error).message)"); return false }
     }
     func finishTracking() {
         if let active = activeRestoreSessions.first { _ = trackRestore(active); return }
-        do { try safetyJournal?.completeOperation() } catch { safetyStorageError = error.localizedDescription }
+        do { try safetyJournal?.completeOperation() } catch { safetyStorageError = UserFacingError.presentation(for: error).message }
     }
     func reportFailure(_ error: Error) {
-        alert = error.localizedDescription
+        let presentation = UserFacingError.presentation(for: error, operation: supportContext.operation)
+        alert = presentation.message
+        alertTitle = presentation.title
         var code = (error as NSError).code
         let category: String
         switch error {
@@ -66,8 +68,8 @@ extension AppModel {
         case is URLError: category = "network"
         default: category = "application"
         }
-        do { supportIncident = try safetyJournal?.recordFailure(code: code, category: category) }
-        catch { safetyStorageError = error.localizedDescription }
+        do { supportIncident = try safetyJournal?.recordFailure(code: code, category: presentation.diagnosticCategory ?? category) }
+        catch { safetyStorageError = UserFacingError.presentation(for: error).message }
     }
     func openSupportReport() {
         if supportIncident == nil { supportIncident = SupportReport(kind: .userFeedback, appVersion: appVersion, context: supportContext) }
@@ -86,7 +88,7 @@ extension AppModel {
         panel.begin { [weak self] response in
             guard response == .OK, let self, let url = panel.url else { return }
             do { try Data(self.supportReportText.utf8).write(to: url, options: .atomic) }
-            catch { self.alert = error.localizedDescription }
+            catch { self.reportFailure(error) }
         }
     }
     func copySupportReport() { NSPasteboard.general.clearContents(); NSPasteboard.general.setString(supportReportText, forType: .string) }
@@ -125,7 +127,7 @@ extension AppModel {
 
     func acknowledgeRecovery() {
         do { try safetyJournal?.acknowledgeRecovery(); recoveryRequired = false }
-        catch { safetyStorageError = error.localizedDescription }
+        catch { safetyStorageError = UserFacingError.presentation(for: error).message }
     }
 
 }

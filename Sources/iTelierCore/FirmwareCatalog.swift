@@ -147,7 +147,9 @@ public struct FirmwareCatalog: Sendable {
         for (name, result) in [("IPSW.me", publicResult), (L("AppleDB (bêtas et archives)"), appleDBResult)] {
             switch result {
             case .success(let values): releases += values; successes += 1
-            case .failure(let error): warnings.append("\(name) indisponible : \(error.localizedDescription)")
+            case .failure(let error):
+                let message = UserFacingError.presentation(for: error, operation: .firmwareDownload).message
+                warnings.append(L("\(name) indisponible : \(message)"))
             }
         }
         guard successes > 0 else { return try publicResult.map { FirmwareCatalogResult(releases: $0, warnings: warnings) }.get() }

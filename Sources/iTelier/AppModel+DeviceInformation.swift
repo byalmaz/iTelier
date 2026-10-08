@@ -37,6 +37,6 @@ extension AppModel {
                     hasStorageDetails: storageDetails || previous.hasStorageDetails, date: information.date)
             } else { deviceInformation = information }
         } catch is CancellationError { }
-        catch { if informationDevice?.id == target.id { deviceInformationError = error.localizedDescription } }
+        catch { if informationDevice?.id == target.id { deviceInformationError = UserFacingError.presentation(for: error, operation: .deviceCheck).message } }
     }
 }

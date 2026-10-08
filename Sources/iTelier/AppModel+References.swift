@@ -12,7 +12,7 @@ extension AppModel {
         referenceError = nil
         guard let report else { return }
         do { checkReference = try referenceStore.load(for: report.device, demo: isDemo) }
-        catch { referenceError = L("Référence non chargée : ") + error.localizedDescription }
+        catch { referenceError = L("Référence non chargée : ") + UserFacingError.presentation(for: error, operation: .deviceCheck).message }
     }
 
     func saveCheckReference() {
@@ -23,7 +23,7 @@ extension AppModel {
             checkReference = reference
             referenceError = nil
             addActivity(L("Référence enregistrée"), L("Ce Check servira de relevé de comparaison pour cet appareil. Il ne constitue pas une référence d’usine."), symbol: "doc.badge.clock")
-        } catch { referenceError = error.localizedDescription }
+        } catch { referenceError = UserFacingError.presentation(for: error, operation: .deviceCheck).message }
     }
 
     func importCheckReference() {
@@ -48,6 +48,6 @@ extension AppModel {
             checkReference = reference
             referenceError = nil
             addActivity(L("Référence importée"), L("Un rapport du même appareil a été chargé pour la comparaison. Son origine d’usine n’est pas certifiée."), symbol: "doc.badge.arrow.up")
-        } catch { referenceError = error.localizedDescription }
+        } catch { referenceError = UserFacingError.presentation(for: error, operation: .deviceCheck).message }
     }
 }

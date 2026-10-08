@@ -106,23 +106,26 @@ struct BackupsView: View {
                 }
                 if encrypt && model.backupEncryptionEnabled != true {
                     SecureField(L("Mot de passe (pour activer le chiffrement)"), text: $password)
-                    if !password.isEmpty { SecureField(L("Confirmer le mot de passe"), text: $repeatedPassword) }
+                    SecureField(L("Confirmer le mot de passe"), text: $repeatedPassword)
                     if let issue = newPasswordIssue { Text(issue).font(.system(size: 11)).foregroundStyle(Palette.amber) }
                     Text(L("L’activation s’applique aux prochaines sauvegardes de cet appareil. Conservez ce mot de passe : iTelier ne l’enregistre pas et ne pourra pas le retrouver."))
                         .font(.system(size: 11)).foregroundStyle(Palette.amber).lineSpacing(3)
                 }
-                if model.isReadingBackupEncryption {
+                ZStack(alignment: .leading) {
                     Text(L("Lecture du chiffrement de l’appareil…")).font(.system(size: 11)).foregroundStyle(Palette.secondary)
-                } else if model.backupEncryptionEnabled == true {
+                        .opacity(model.isReadingBackupEncryption ? 1 : 0)
+                        .accessibilityHidden(!model.isReadingBackupEncryption)
                     Label(L("Chiffrement déjà activé sur cet appareil"), systemImage: "lock.fill")
                         .font(.system(size: 11)).foregroundStyle(Palette.mint)
+                        .opacity(!model.isReadingBackupEncryption && model.backupEncryptionEnabled == true ? 1 : 0)
+                        .accessibilityHidden(model.isReadingBackupEncryption || model.backupEncryptionEnabled != true)
                 }
                 Button {
                     model.startBackup(encrypted: encrypt, password: password)
                     password = ""; repeatedPassword = ""
                 } label: { Label(L("Sauvegarder maintenant"), systemImage: "externaldrive.badge.plus").frame(maxWidth: .infinity) }
                     .buttonStyle(PrimaryButtonStyle())
-                    .disabled(!model.canStartBackup || (encrypt && model.backupEncryptionEnabled != true && (password.isEmpty || password != repeatedPassword || newPasswordIssue != nil)))
+                    .disabled(!model.canRequestBackup || (encrypt && model.backupEncryptionEnabled != true && (password.isEmpty || password != repeatedPassword || newPasswordIssue != nil)))
                 if model.device?.mode != .normal { Text(L("L’appareil doit être connecté, déverrouillé et avoir accepté « Faire confiance ».")).font(.system(size: 11)).foregroundStyle(Palette.secondary) }
                 if model.recoveryRequired { Text(L("Vérifiez l’appareil dans l’avis d’interruption avant de démarrer une autre opération.")).font(.system(size: 11)).foregroundStyle(Palette.amber) }
             }.textFieldStyle(.roundedBorder)

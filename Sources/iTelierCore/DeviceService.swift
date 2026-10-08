@@ -208,7 +208,7 @@ public struct DeviceService: Sendable {
             _ = try RestoreValidator.reconnectedDevice(original: device, ecid: ecid, candidates: [targeted])
         }
         if approval.mode == .preserveData {
-            if let issue = verified.preservationIssue(for: connected) { throw DeviceServiceError.unsafeRestore(issue) }
+            try RestoreValidator.validatePreservation(device: connected, firmware: verified, approval: approval)
             // --variant performs an exact identity match and fails instead of falling back to erase.
             let help = try await command(restoreTool, ["--help"], timeout: 10)
             let usage = String(decoding: help.stdout + help.stderr, as: UTF8.self)

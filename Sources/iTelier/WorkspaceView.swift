@@ -117,7 +117,7 @@ struct WorkspaceView: View {
         .sheet(isPresented: $model.showFirmwareBrowser) { FirmwareBrowserView().environmentObject(model) }
         .sheet(isPresented: $model.showRestorePreparation) { RestorePreparationView().environmentObject(model) }
         .sheet(isPresented: $model.showSupportReport) { SupportReportView().environmentObject(model) }
-        .alert("iTelier", isPresented: Binding(get: { model.alert != nil }, set: { if !$0 { model.alert = nil } })) {
+        .alert(model.alertTitle ?? "iTelier", isPresented: Binding(get: { model.alert != nil }, set: { if !$0 { model.alert = nil } })) {
             Button(L("Compris")) { model.alert = nil }
             Button(L("Rapport…")) { model.openSupportReport() }
         } message: { Text(model.alert ?? "") }
@@ -188,7 +188,7 @@ struct WorkspaceView: View {
                         HStack(spacing: 4) {
                             Text("SN \(serial)").font(.system(size: 10, design: .monospaced)).lineLimit(1).minimumScaleFactor(0.8).textSelection(.enabled)
                             Spacer(minLength: 0)
-                            CopyValueButton(value: serial, name: L("Numéro de série"))
+                            CopyValueButton(value: serial, name: L("Numéro de série"), iconOnly: true)
                         }
                     } else { Text(L("SN indisponible")).font(.system(size: 10)) }
                 }

@@ -1,5 +1,27 @@
 # Tests du cœur
 
+## Build 43 — erreurs compréhensibles et mise à jour en récupération/DFU
+
+Les alertes affichent désormais un titre court, une explication et une prochaine étape selon le problème rencontré. La sortie brute du moteur reste dans le journal technique local, accessible volontairement. Elle n’apparaît plus dans l’alerte, les activités, les erreurs du catalogue ni celles des fiches appareil. Le rapport d’incident conserve une catégorie contrôlée et le code d’erreur, sans journal, chemin privé ou identifiant d’appareil. Un échec de validation réseau auprès d’Apple reste distinct d’un refus explicite de signature.
+
+Les options distinguent **Mettre à jour** et **Restaurer**. La conservation des données ne demande plus de revenir au mode normal lorsqu’une cible est en récupération ou en DFU. Elle exige la version et le build installés avant le problème, indiqués et confirmés par l’utilisateur. Cette déclaration est liée à l’ECID, au modèle et à la carte de l’appareil, affichée comme telle dans la confirmation et invalidée lors d’un changement de cible ou de mode. Toute édition révoque les accords précédents. Une lecture normale fraîche reste prioritaire ; le précontrôle répète les validations avant lancement et bloque les versions antérieures. L’identité de mise à jour exacte est imposée au moteur, sans relance automatique avec effacement. Le mode Restaurer conserve sa confirmation explicite de perte de données.
+
+Validation locale du 8 octobre 2026 : **153 tests du cœur réussis**, dont seize tests de messages, confidentialité, traduction et priorités, et neuf tests de conservation en récupération/DFU. Le helper passe ses tests avec un moteur inerte : concurrence, cibles et journaux isolés, rejeu, IPSW modifié, fausse réussite et survie du suivi à la fermeture du parent. Un harnais SwiftUI isolé vérifie la disponibilité des deux opérations, les accords, la confirmation immuable, l’invalidation après édition/changement d’identité/mode, le refus d’un retour en arrière et l’absence de journal privé dans le rapport. Les options sont rendues en français/anglais et en clair/sombre ; la confirmation et le choix avec effacement sont relus visuellement. Le contrôle natif direct de l’alerte est resté limité par deux expirations de l’outil d’accès à l’interface ; ses textes et leur transmission sont vérifiés par le harnais, sans affirmer un contrôle visuel complet de cette alerte.
+
+Bundle release arm64 build 43 compilé, signature stricte valide et marque vérifiée dans les sources et les 93 fichiers du bundle. Aucune commande USB, sauvegarde ou restauration sur appareil réel, aucun commit ni publication GitHub. La version déclarée ne peut pas être vérifiée sur l’appareil dans ces modes : une saisie incorrecte peut compromettre les données, et aucun résultat matériel de récupération ou de DFU n’est garanti par ces simulations.
+
+## Build 42 — bouton de sauvegarde stable
+
+« Sauvegarder maintenant » ne se désactive plus à chaque actualisation automatique. Un clic pendant la découverte réserve la demande, attend sa fin et vérifie de nouveau l’identifiant, l’ECID, le modèle et le mode avant de démarrer. Les autres opérations restent bloquées pendant cette attente. Le statut de chiffrement connu est conservé pendant sa relecture et invalidé dès que la cible change ; la zone de statut garde sa hauteur et les deux champs de mot de passe apparaissent ensemble.
+
+Validation locale du 7 octobre 2026 : harnais SwiftUI isolé avec lectures et lancement remplacés par des fonctions inertes. Il vérifie le lancement unique après attente, le refus après changement de cible ou déconnexion, l’exclusion des autres opérations, les lectures sérialisées et le traitement des annulations, échecs et résultats périmés. En français/anglais et en clair/sombre, les cartes gardent la même hauteur pendant la lecture et à la saisie du premier caractère ; les rendus PNG sont identiques avant et pendant l’actualisation automatique. Compilation release arm64 et signature stricte du build 42 réussies. Aucune commande sur un appareil réel, aucun commit ni publication GitHub.
+
+## Build 41 — copie compacte dans la barre latérale
+
+Le bouton de copie du numéro de série affiche uniquement le symbole, dans une zone de 26 × 26 points. La coche de confirmation, le symbole d’échec, l’aide au survol et le libellé d’accessibilité restent disponibles. Les autres usages du composant gardent leur texte.
+
+Validation locale du 7 octobre 2026 : compilation release arm64 et signature stricte du bundle réussies ; rendu du composant réel vérifié en clair et sombre, avec comparaison de l’affichage compact et de l’affichage habituel. Aucune commande sur un appareil réel, aucun commit ni publication GitHub pour cette retouche.
+
 ## Build 40 — restaurations simultanées
 
 Chaque appareil conserve une confirmation, un firmware, un mode, un suivi et un journal indépendants. Une seconde restauration peut démarrer sans attendre la première ; une cible déjà active est bloquée. Les échecs restent à vérifier par appareil, même après relance, et ne bloquent pas une autre cible identifiée. Les sauvegardes restent exclues pendant l’écriture IPSW. L’app ne propose pas de pause du moteur.

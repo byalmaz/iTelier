@@ -55,9 +55,11 @@ final class AppModel: ObservableObject {
     @Published var showOnboarding = false
     @Published var backups: [LocalBackup] = []
     @Published var isBackupBusy = false
+    @Published var isPreparingBackup = false
     @Published var isLoadingBackups = false
     @Published var isReadingBackupEncryption = false
     @Published var backupEncryptionEnabled: Bool?
+    var backupEncryptionTarget: DeviceSnapshot?
     @Published var backupLibraryError: String?
     @Published var backupPhase = ""
     @Published var backupProgress: Double?
@@ -68,8 +70,12 @@ final class AppModel: ObservableObject {
     var backupSession: URL?
     var backupObservation: Task<Void, Never>?
     @Published var page: WorkspacePage = .overview
-    @Published var devices: [DeviceSnapshot] = []
-    @Published var selectedDeviceID: String?
+    @Published var devices: [DeviceSnapshot] = [] {
+        didSet { invalidateBackupEncryptionIfNeeded(); invalidateSystemDeclarationIfNeeded() }
+    }
+    @Published var selectedDeviceID: String? {
+        didSet { invalidateBackupEncryptionIfNeeded(); invalidateSystemDeclarationIfNeeded() }
+    }
     @Published var report: DiagnosticReport?
     @Published var checkReference: CheckReference?
     @Published var referenceError: String?
@@ -93,7 +99,10 @@ final class AppModel: ObservableObject {
     @Published var restoreProgress: Double?
     @Published var logs: [String] = []
     @Published var activity: [ActivityEntry] = []
-    @Published var alert: String?
+    @Published var alertTitle: String?
+    @Published var alert: String? {
+        didSet { alertTitle = nil }
+    }
     @Published var connectionIssue: DeviceConnectionIssue?
     @Published var informationDevice: DeviceSnapshot?
     @Published var deviceWallpapers: [String: Data] = [:]
@@ -117,6 +126,15 @@ final class AppModel: ObservableObject {
         didSet { if oldValue != restoreMode { resetAcknowledgements() } }
     }
     private(set) var confirmationMode: RestoreMode?
+    @Published var declaredSystemVersion = "" {
+        didSet { if oldValue != declaredSystemVersion { declaredSystemTarget = device; resetAcknowledgements(clearOutcome: false) } }
+    }
+    @Published var declaredSystemBuild = "" {
+        didSet { if oldValue != declaredSystemBuild { declaredSystemTarget = device; resetAcknowledgements(clearOutcome: false) } }
+    }
+    @Published var declaredSystemAcknowledged = false
+    var declaredSystemTarget: DeviceSnapshot?
+    private(set) var confirmationSystemDeclaration: RestoreSystemDeclaration?
     @Published var showFirmwareBrowser = false
     @Published var catalogDevices: [FirmwareDevice] = []
     @Published var catalogReleases: [FirmwareRelease] = []
@@ -189,25 +207,44 @@ final class AppModel: ObservableObject {
         if let checkReference, let compared = try? checkReference.applying(to: report, demo: isDemo) { return compared }
         return report
     }
-    var busy: Bool { isReadingDeviceInformation || isReadingBackupEncryption || isBackupBusy || isRestoring || isInspecting || isChecking || isDownloadingFirmware || isChoosingDownloadFolder || isManagingReference }
+    var busy: Bool { isReadingDeviceInformation || isReadingBackupEncryption || isPreparingBackup || isBackupBusy || isRestoring || isInspecting || isChecking || isDownloadingFirmware || isChoosingDownloadFolder || isManagingReference }
     // Choosing a mode only changes local preparation. Downloading or inspecting an
     // IPSW must not lock it; the selected mode is validated again before execution.
     var canChangeRestoreMode: Bool { !selectedDeviceRestoring && !isBackupBusy }
     // Downloads and local IPSW analysis do not use USB. Keep discovering devices during them.
-    var canRefreshDevices: Bool { !isReadingDeviceInformation && !isDemo && !isReadingBackupEncryption && !isBackupBusy && !hasUnidentifiedRestore && !isChecking && !isRefreshing && !isManagingReference }
+    var canRefreshDevices: Bool { !isReadingDeviceInformation && !isDemo && !isReadingBackupEncryption && !isPreparingBackup && !isBackupBusy && !hasUnidentifiedRestore && !isChecking && !isRefreshing && !isManagingReference }
     var canInspect: Bool { !preparationBusy && !isRefreshing && !isDemo }
+    var needsSystemDeclaration: Bool { restoreMode == .preserveData && device != nil && device?.mode != .normal }
+    var systemDeclaration: RestoreSystemDeclaration? {
+        guard needsSystemDeclaration, let device, let target = declaredSystemTarget,
+              target.id == device.id, target.ecid == device.ecid, target.productType == device.productType,
+              target.hardwareModel == device.hardwareModel, target.mode == device.mode else { return nil }
+        return RestoreSystemDeclaration(device: device, version: declaredSystemVersion, build: declaredSystemBuild)
+    }
+    func invalidateSystemDeclarationIfNeeded() {
+        guard let target = declaredSystemTarget else { return }
+        guard let current = device, current.id == target.id, current.ecid == target.ecid,
+              current.productType == target.productType, current.hardwareModel == target.hardwareModel,
+              current.mode == target.mode else {
+            declaredSystemVersion = ""; declaredSystemBuild = ""; declaredSystemTarget = nil
+            resetAcknowledgements(clearOutcome: false)
+            return
+        }
+    }
     var canRestore: Bool {
         guard let device, let firmware else { return false }
         return !device.isVisionPro && !isDemo && !preparationBusy && !selectedDeviceRestoring && !selectedDeviceNeedsReview && !hasUnidentifiedRestore && !isRefreshing && !recoveryRequired && safetyStorageError == nil
             && firmware.supports(device, mode: restoreMode)
-            && (restoreMode == .erase || firmware.preservationIssue(for: device) == nil)
+            && (restoreMode == .erase || (firmware.preservationIssue(for: device, declaration: systemDeclaration) == nil
+                && (!needsSystemDeclaration || declaredSystemAcknowledged)))
             && firmwareSourceRelease?.signed != false
             && device.ecid != nil && installed("idevicerestore")
             && backupAcknowledged && appleIDAcknowledged
     }
     var canConfirmRestore: Bool {
         guard canRestore, let device, let firmware, let confirmationDevice, let confirmationFirmware else { return false }
-        return restoreMode == confirmationMode && device.id == confirmationDevice.id && device.ecid == confirmationDevice.ecid
+        return restoreMode == confirmationMode && systemDeclaration == confirmationSystemDeclaration
+            && device.mode == confirmationDevice.mode && device.id == confirmationDevice.id && device.ecid == confirmationDevice.ecid
             && device.productType == confirmationDevice.productType && device.hardwareModel == confirmationDevice.hardwareModel
             && firmware.sha256 == confirmationFirmware.sha256 && firmware.url == confirmationFirmware.url
     }
@@ -216,6 +253,7 @@ final class AppModel: ObservableObject {
         confirmationDevice = device
         confirmationFirmware = firmware
         confirmationMode = restoreMode
+        confirmationSystemDeclaration = systemDeclaration
         operationAcknowledged = false
         showRestorePreparation = false
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
@@ -226,7 +264,7 @@ final class AppModel: ObservableObject {
     func installed(_ name: String) -> Bool { tools.first { $0.name == name }?.isInstalled == true }
 
     func selectDevice(_ id: String?) {
-        guard !isBackupBusy, !isRefreshing, !isChecking, !isReadingDeviceInformation, !isReadingBackupEncryption, !showConfirmation else { return }
+        guard !isPreparingBackup, !isBackupBusy, !isRefreshing, !isChecking, !isReadingDeviceInformation, !isReadingBackupEncryption, !showConfirmation else { return }
         selectedDeviceID = id
         report = nil
         checkReference = nil
@@ -238,6 +276,8 @@ final class AppModel: ObservableObject {
         confirmationDevice = nil
         confirmationFirmware = nil
         confirmationMode = nil
+        confirmationSystemDeclaration = nil
+        declaredSystemAcknowledged = false
         backupAcknowledged = false
         appleIDAcknowledged = false
         operationAcknowledged = false
@@ -342,7 +382,7 @@ final class AppModel: ObservableObject {
             return
         } catch {
             reportFailure(error)
-            addActivity(L("Lecture interrompue"), error.localizedDescription, symbol: "exclamationmark.triangle")
+            addActivity(L("Lecture interrompue"), UserFacingError.presentation(for: error, operation: .deviceCheck).message, symbol: "exclamationmark.triangle")
         }
     }
 
@@ -406,7 +446,7 @@ final class AppModel: ObservableObject {
             }
         } catch {
             guard generation == catalogGeneration else { return }
-            catalogError = error.localizedDescription
+            catalogError = UserFacingError.presentation(for: error, operation: .firmwareDownload).message
         }
     }
 
@@ -449,7 +489,7 @@ final class AppModel: ObservableObject {
             catalogUpdatedAt = Date()
         } catch {
             guard generation == catalogGeneration else { return }
-            catalogError = error.localizedDescription
+            catalogError = UserFacingError.presentation(for: error, operation: .firmwareDownload).message
         }
     }
 
@@ -602,14 +642,15 @@ final class AppModel: ObservableObject {
             } else {
                 downloadPhase = completedDownload == nil ? L("Le téléchargement n’a pas abouti") : L("L’IPSW n’a pas pu être validé")
                 reportFailure(error)
-                addActivity(completedDownload == nil ? L("Échec du téléchargement") : L("Validation du firmware interrompue"), error.localizedDescription, symbol: "exclamationmark.triangle")
+                addActivity(completedDownload == nil ? L("Échec du téléchargement") : L("Validation du firmware interrompue"), UserFacingError.presentation(for: error, operation: .firmwareDownload).message, symbol: "exclamationmark.triangle")
             }
         }
     }
 
     func beginRestore() async {
         guard canConfirmRestore, operationAcknowledged, let device = confirmationDevice, let firmware = confirmationFirmware else { return }
-        await startRestore(device: device, firmware: firmware, mode: restoreMode)
+        await startRestore(device: device, firmware: firmware, mode: restoreMode,
+            systemDeclaration: confirmationSystemDeclaration, acknowledgedDeclaredSystem: declaredSystemAcknowledged)
     }
 
     func toggleDemo() {
@@ -745,6 +786,6 @@ final class AppModel: ObservableObject {
             let data = try JSONSerialization.data(withJSONObject: payload, options: [.prettyPrinted, .sortedKeys])
             try data.write(to: url, options: .atomic)
             addActivity(L("Rapport exporté"), revealIdentifiers ? L("L’export inclut les identifiants affichés.") : L("Les identifiants sont masqués dans l’export."), symbol: "square.and.arrow.up")
-        } catch { alert = error.localizedDescription }
+        } catch { reportFailure(error) }
     }
 }

@@ -144,9 +144,7 @@ enum RestoreValidator {
         guard approval.mode == .erase ? approval.acknowledgedDataLoss : approval.acknowledgedPreservationRisk else {
             throw DeviceServiceError.unsafeRestore(L("Vous devez confirmer le mode de restauration et ses conséquences."))
         }
-        if approval.mode == .preserveData, let issue = firmware.preservationIssue(for: device) {
-            throw DeviceServiceError.unsafeRestore(issue)
-        }
+        try validatePreservation(device: device, firmware: firmware, approval: approval)
         guard approval.deviceID == device.id, approval.firmwareSHA256 == firmware.sha256,
               firmware.sha256.range(of: "^[0-9a-f]{64}$", options: .regularExpression) != nil else {
             throw DeviceServiceError.unsafeRestore(L("La confirmation ne correspond plus à l’appareil ou au fichier sélectionné."))
@@ -158,6 +156,17 @@ enum RestoreValidator {
             throw DeviceServiceError.unsafeRestore(L("Le firmware ne correspond pas au modèle et à la carte matérielle de cet appareil."))
         }
         return ecid
+    }
+
+    /// Contrôle répété après reconnexion ; une déclaration ne remplace jamais une lecture normale.
+    static func validatePreservation(device: DeviceSnapshot, firmware: FirmwareInfo, approval: RestoreApproval) throws {
+        guard approval.mode == .preserveData else { return }
+        if device.mode != .normal, !approval.acknowledgedDeclaredSystem {
+            throw DeviceServiceError.unsafeRestore(L("Confirmez la version et le numéro de build que vous avez indiqués pour cet appareil."))
+        }
+        if let issue = firmware.preservationIssue(for: device, declaration: approval.systemDeclaration) {
+            throw DeviceServiceError.unsafeRestore(issue)
+        }
     }
 
     static func reconnectedDevice(original: DeviceSnapshot, ecid: String, candidates: [DeviceSnapshot]) throws -> DeviceSnapshot {

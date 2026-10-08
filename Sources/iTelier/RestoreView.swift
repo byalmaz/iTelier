@@ -49,7 +49,7 @@ struct RestoreView: View {
                     Spacer()
                     Button {
                         model.presentConfirmation()
-                    } label: { Label(L("Restaurer…"), systemImage: "arrow.triangle.2.circlepath") }
+                    } label: { Label(model.restoreMode == .preserveData ? L("Mettre à jour…") : L("Restaurer…"), systemImage: "arrow.triangle.2.circlepath") }
                         .buttonStyle(PrimaryButtonStyle()).disabled(!model.canRestore)
                 }.padding(.top, 4) }
                 if !model.installed("idevicerestore"), !model.isDemo {
@@ -237,6 +237,9 @@ struct RestoreConfirmation: View {
                     LabeledContent(L("Modèle"), value: model.confirmationDevice?.productType ?? "—")
                     LabeledContent("ECID", value: model.confirmationDevice?.ecid.map { "••••\($0.suffix(6))" } ?? "—")
                     LabeledContent("Firmware", value: model.confirmationFirmware.map { "\($0.version) (\($0.build))" } ?? "—")
+                    if let declaration = model.confirmationSystemDeclaration {
+                        LabeledContent(L("Version indiquée par vous"), value: "\(declaration.version) (\(declaration.build))")
+                    }
                     Text(model.confirmationFirmware?.url.lastPathComponent ?? "").font(.system(size: 10)).foregroundStyle(Palette.secondary).lineLimit(2)
                 }.font(.system(size: 12))
             }

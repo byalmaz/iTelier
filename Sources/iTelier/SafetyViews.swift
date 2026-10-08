@@ -7,13 +7,10 @@ struct RestoreOptionsView: View {
         Surface {
             VStack(alignment: .leading, spacing: 16) {
                 Text(L("Options de restauration")).font(.system(size: 23, weight: .light))
-                Picker(L("Opération"), selection: Binding(
-                    get: { model.restoreMode },
-                    set: { if model.canChangeRestoreMode { model.restoreMode = $0 } }
-                )) {
-                    Text(L("Mettre à jour")).tag(RestoreMode.preserveData)
-                    Text(L("Restaurer")).tag(RestoreMode.erase)
-                }.pickerStyle(.segmented).disabled(!model.canChangeRestoreMode)
+                Toggle(L("Conserver les données de l’appareil"), isOn: Binding(
+                    get: { model.restoreMode == .preserveData },
+                    set: { if model.canChangeRestoreMode { model.restoreMode = $0 ? .preserveData : .erase } }
+                )).font(.system(size: 14, weight: .medium)).disabled(!model.canChangeRestoreMode)
                 Text(model.restoreMode == .preserveData
                     ? L("Réinstalle iOS en conservant les apps, photos et réglages. Une sauvegarde reste nécessaire : une erreur peut entraîner une perte de données. Aucun effacement automatique en cas d’échec.")
                     : L("Toutes les données de l’appareil seront effacées. Préparez une sauvegarde et gardez le câble branché pendant l’opération."))

@@ -1,5 +1,11 @@
 # Tests du cœur
 
+## Build 44 — choix explicite de conservation
+
+La case **Conserver les données de l’appareil** revient en tête des options de restauration. Cochée, elle sélectionne la mise à jour qui tente de préserver les données ; décochée, elle sélectionne l’effacement. Le texte et la dernière confirmation suivent ce choix. Le sélecteur introduit au build 43 avait rendu cette option moins identifiable. Le moteur, les contrôles de version, la déclaration en récupération/DFU et les confirmations de perte de données ne sont pas modifiés.
+
+Validation locale du 8 octobre 2026 : rendu du composant SwiftUI réel en français/anglais et en clair/sombre, avec la case cochée et décochée. Sa présence est relue en mode normal, récupération et DFU, ainsi que sans appareil connecté. Le harnais isolé valide encore les accords propres à la cible, la confirmation figée, l’invalidation après changement d’identité/mode et le refus des versions antérieures, sans commande USB. Build 44 release arm64 compilé, signature stricte et marque du bundle vérifiées. Les traductions existantes sont réutilisées ; aucun changement du cœur ni nouveau test miroir de l’interface.
+
 ## Préversion publiée — build 43
 
 La [préversion v0.2.0-beta.3](https://github.com/byalmaz/iTelier/releases/tag/v0.2.0-beta.3), publiée le 8 octobre 2026, distribue le DMG arm64 du build 43 et son fichier SHA-256. Le tag cible `a429df4075b150bd33b2772e28955f16adf4f1a8`. Le [workflow macOS 37805285929](https://github.com/byalmaz/iTelier/actions/runs/37805285929) a réussi : 153 tests XCTest sans échec, helper inerte, six tests d’intégrité des dépendances, bundle release, vérification de la marque et création du ZIP et du DMG déposés en artifact.
